@@ -1,64 +1,70 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
-import requests
-from openai import OpenAI
+from azure.search.documents import SearchClient
+from azure.core.credentials import AzureKeyCredential
+import openai
 
 app = Flask(__name__)
 CORS(app)
 
 # -------------------------
-# Azure OpenAI Configuration
+# Azure OpenAI Configuration (Optional, if using GPT for context-aware answers)
 # -------------------------
-openai_api_key = "YOUR_OPENAI_KEY"
-openai_endpoint = "https://YOUR_OPENAI_RESOURCE.openai.azure.com/"
-openai_deployment = "gpt-35-turbo-demo"  # your ChatGPT deployment name
-
-client = OpenAI(api_key=openai_api_key, base_url=openai_endpoint)
+openai.api_type = "azure"
+openai.api_base = "https://<your-azure-openai-endpoint>.openai.azure.com/"
+openai.api_version = "2024-12-01-preview"
+openai.api_key = "<your-azure-openai-key>"
+deployment_name = "gpt-35-turbo-demo"  # Chat model deployment name
 
 # -------------------------
 # Azure AI Search Configuration
 # -------------------------
-search_api_key = "YOUR_SEARCH_KEY"
-search_endpoint = "https://YOUR_SEARCH_SERVICE.search.windows.net"
-search_index = "YOUR_INDEX_NAME"  # index created in AI Search
+search_endpoint = "https://<your-search-service>.search.windows.net"
+search_index_name = "<your-index-name>"
+search_api_key = "<your-search-api-key>"
+
+search_client = SearchClient(
+    endpoint=search_endpoint,
+    index_name=search_index_name,
+    credential=AzureKeyCredential(search_api_key)
+)
 
 # -------------------------
-# API route
+# API route for frontend
 # -------------------------
 @app.route("/ask", methods=["POST"])
 def ask():
     data = request.json
-    question = data.get("question", "")
+    question = data.get("question", "").strip()
+
     if not question:
         return jsonify({"answer": "No question provided."})
 
     try:
-        # Step 1: Use GPT to convert user question to structured query
-        response = client.chat.completions.create(
-            model=openai_deployment,
-            messages=[{"role": "user", "content": question}]
+        # Step 1: Query Azure AI Search
+        results = search_client.search(question, top=1)  # top 1 result
+        top_result = next(results, None)
+
+        if not top_result:
+            return jsonify({"answer": "No relevant document found."})
+
+        document_text = top_result.get("content", "")  # replace 'content' with your column name
+
+        # Step 2: Use GPT to answer based on top document
+        response = openai.ChatCompletion.create(
+            engine=deployment_name,
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": f"Answer the question based on this document:\n{document_text}\nQuestion: {question}"}
+            ],
+            temperature=0.7
         )
-        structured_query = response.choices[0].message.content
 
-        # Step 2: Send structured query to Azure AI Search
-        search_url = f"{search_endpoint}/indexes/{search_index}/docs/search?api-version=2023-07-01-Preview"
-        headers = {
-            "api-key": search_api_key,
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "search": structured_query,
-            "queryType": "semantic"
-        }
-        search_response = requests.post(search_url, headers=headers, json=payload)
-        search_results = search_response.json()
-
-        return jsonify({"answer": search_results})
+        answer = response['choices'][0]['message']['content']
+        return jsonify({"answer": answer})
 
     except Exception as e:
         return jsonify({"answer": f"Error: {str(e)}"})
-
 
 # -------------------------
 # Run server
