@@ -8,19 +8,19 @@ app = Flask(__name__)
 CORS(app)
 
 # -------------------------
-# Azure OpenAI Configuration (Optional, if using GPT for context-aware answers)
+# Azure OpenAI Configuration
 # -------------------------
 openai.api_type = "azure"
 openai.api_base = "https://<your-azure-openai-endpoint>.openai.azure.com/"
 openai.api_version = "2024-12-01-preview"
 openai.api_key = "<your-azure-openai-key>"
-deployment_name = "gpt-35-turbo-demo"  # Chat model deployment name
+deployment_name = "gpt-35-turbo-demo"  # GPT deployment name
 
 # -------------------------
 # Azure AI Search Configuration
 # -------------------------
 search_endpoint = "https://<your-search-service>.search.windows.net"
-search_index_name = "<your-index-name>"
+search_index_name = "<your-index-name>"      # The index you created for the Excel
 search_api_key = "<your-search-api-key>"
 
 search_client = SearchClient(
@@ -48,9 +48,12 @@ def ask():
         if not top_result:
             return jsonify({"answer": "No relevant document found."})
 
-        document_text = top_result.get("content", "")  # replace 'content' with your column name
+        # Step 2: Build document context from relevant columns
+        document_text = f"Product: {top_result.get('productName', '')}, " \
+                        f"Brand: {top_result.get('brandName', '')}, " \
+                        f"Category: {top_result.get('category', '')}"
 
-        # Step 2: Use GPT to answer based on top document
+        # Step 3: Use GPT to answer based on top document
         response = openai.ChatCompletion.create(
             engine=deployment_name,
             messages=[
