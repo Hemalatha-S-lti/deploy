@@ -90,3 +90,9 @@ curl -X POST http://localhost:3000/api/query \
 -H "Content-Type: application/json" \
 -d "{\"prompt\":\"show me shoes under 1000\"}"
 
+curl -X POST "https://<YOUR_FOUNDY_ENDPOINT>/openai/deployments/<DEPLOYMENT_NAME>/chat/completions?api-version=2023-03-15-preview" \
+-H "Content-Type: application/json" \
+-H "api-key: <YOUR_API_KEY>" \
+-d "{\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}]}"
+
+
