@@ -85,3 +85,8 @@ const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Backend running at http://localhost:${PORT}`);
 });
+
+curl -X POST http://localhost:3000/api/query \
+-H "Content-Type: application/json" \
+-d "{\"prompt\":\"show me shoes under 1000\"}"
+
