@@ -1,51 +1,102 @@
-// server.js
-const express = require("express");
-const axios = require("axios");
-const bodyParser = require("body-parser");
-const cors = require("cors");
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
-const app = express();
-app.use(cors());
-app.use(bodyParser.json());
+@Component({
+  selector: 'app-home',
+  standalone: true,
+  imports: [CommonModule, FormsModule, HttpClientModule],
+  templateUrl: './home.html',
+  styleUrls: ['./home.css']
+})
+export class Home {
+  prompt: string = '';
+  isSubmitting = false;
+  gptResponse: string = ''; // Store GPT answer
+  submittedPrompts: string[] = [];
 
-// Replace with your Azure details
-const SEARCH_URL = "https://<your-search-resource>.search.windows.net/indexes/products-index/docs";
-const SEARCH_KEY = "<your-search-admin-key>";
-const GPT_URL = "https://<your-openai-resource>.openai.azure.com/openai/deployments/gpt-products-deployment/chat/completions?api-version=2023-07-01-preview";
-const GPT_KEY = "<your-openai-api-key>";
+  constructor(private http: HttpClient) {}
 
-// Endpoint to handle frontend queries
-app.post("/api/query", async (req, res) => {
-  try {
-    const prompt = req.body.prompt;
+  submitPrompt(): void {
+    const text = this.prompt.trim();
+    if (!text || this.isSubmitting) return;
 
-    // Step 1: Query Cognitive Search
-    const searchResponse = await axios.get(SEARCH_URL, {
-      params: { "api-version": "2023-07-01", search: prompt, $top: 5 },
-      headers: { "api-key": SEARCH_KEY }
+    this.isSubmitting = true;
+    this.gptResponse = ''; // clear previous response
+
+    // Save the prompt locally
+    this.submittedPrompts.push(text);
+
+    // Call backend API
+    this.queryGPT(text).subscribe({
+      next: (res: any) => {
+        this.gptResponse = res.answer; // Display GPT response
+        this.prompt = ''; // clear input
+        this.isSubmitting = false;
+      },
+      error: (err) => {
+        console.error(err);
+        this.gptResponse = 'Error fetching response';
+        this.isSubmitting = false;
+      }
     });
-
-    const searchResults = searchResponse.data.value;
-    if (searchResults.length === 0) return res.json({ answer: "No products found" });
-
-    // Step 2: Prepare context for GPT
-    const context = searchResults.map(r => `Product: ${r.productName}, Description: ${r.description}, Category: ${r.category}, Price: ${r.price}`).join("\n");
-    const combinedPrompt = `${prompt}\n\nHere are some products:\n${context}`;
-
-    // Step 3: Call GPT
-    const gptResponse = await axios.post(
-      GPT_URL,
-      { messages: [{ role: "user", content: combinedPrompt }] },
-      { headers: { "api-key": GPT_KEY, "Content-Type": "application/json" } }
-    );
-
-    const answer = gptResponse.data.choices[0].message.content;
-    res.json({ answer });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ answer: "Error fetching response" });
   }
-});
 
-app.listen(3000, () => console.log("Backend running on port 3000"));
+  clearPrompt(): void {
+    if (this.isSubmitting) return;
+    this.prompt = '';
+    this.gptResponse = '';
+  }
+
+  get isSubmitDisabled(): boolean {
+    return !((this.prompt ?? '').trim()) || this.isSubmitting;
+  }
+
+  queryGPT(prompt: string): Observable<any> {
+    return this.http.post('http://localhost:3000/api/query', { prompt });
+  }
+}
+
+<div class="home-center dark-theme" style="--header-h: 0px;">
+  <section class="prompt-card" role="region" aria-labelledby="promptTitle">
+    <h2 class="title" id="promptTitle">Ask anything</h2>
+
+    <label class="sr-only" for="promptInput">Your prompt</label>
+    <textarea
+      id="promptInput"
+      class="prompt-input"
+      [(ngModel)]="prompt"
+      placeholder="Type your prompt here…"
+      (keydown.control.enter)="submitPrompt()"
+      (keydown.meta.enter)="submitPrompt()"
+    ></textarea>
+
+    <div class="actions">
+      <button class="clear-btn" type="button" (click)="clearPrompt()" [disabled]="!prompt.length || isSubmitting">
+        Clear
+      </button>
+
+      <button class="primary-btn" type="button" (click)="submitPrompt()" [disabled]="isSubmitDisabled">
+        {{ isSubmitting ? 'Submitting…' : 'Submit' }}
+      </button>
+    </div>
+
+    <!-- Submitted prompts displayed below -->
+    <div class="submitted-prompts" *ngIf="submittedPrompts.length">
+      <h3 class="submitted-title">Submitted Prompts:</h3>
+      <div class="prompt-card-small" *ngFor="let p of submittedPrompts">
+        {{ p }}
+      </div>
+    </div>
+
+    <!-- GPT Response Display -->
+    <div class="gpt-response" *ngIf="gptResponse">
+      <h3>GPT Response:</h3>
+      <div class="response-card">
+        {{ gptResponse }}
+      </div>
+    </div>
+  </section>
+</div>
