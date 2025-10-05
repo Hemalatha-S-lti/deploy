@@ -54,3 +54,10 @@ app.listen(3000, () => console.log("Backend running on http://localhost:3000"));
 
 curl -X POST http://localhost:3000/api/query -H "Content-Type: application/json" -d "{\"prompt\":\"show me shoes\"}"
 
+curl -X GET "https://mysearchservice.search.windows.net/indexes/products-index/docs?api-version=2023-07-01&search=shoes" -H "api-key: YOUR_ADMIN_KEY"
+curl -X POST "https://myopenairesource.openai.azure.com/openai/deployments/gpt-35-turbo/chat/completions?api-version=2023-07-01-preview" ^
+-H "Content-Type: application/json" ^
+-H "api-key: YOUR_OPENAI_KEY" ^
+-d "{ \"messages\": [{\"role\": \"user\", \"content\": \"Hello from Azure OpenAI\"}] }"
+
+
