@@ -1,0 +1,53 @@
+// server.js
+const express = require("express");
+const axios = require("axios");
+const cors = require("cors");
+
+const app = express();
+app.use(express.json());
+app.use(cors());
+
+// Replace these 5 values with your Azure details
+const COG_SEARCH_SERVICE = "<your-search-service>";       // e.g., products-search
+const COG_SEARCH_KEY = "<search-admin-key>";             // Cognitive Search Admin Key
+const INDEX_NAME = "products-index";                     // Your index name
+const OPENAI_RESOURCE = "<your-openai-resource>";        // e.g., https://my-openai-demo.openai.azure.com
+const OPENAI_KEY = "<your-openai-key>";                 // Azure OpenAI Key
+const GPT_DEPLOYMENT = "<deployment-name>";             // e.g., products-gpt-deployment
+
+app.post("/api/query", async (req, res) => {
+  const query = req.body.prompt;
+
+  try {
+    // 1. Fetch results from Cognitive Search
+    const searchResults = await axios.get(
+      `https://${COG_SEARCH_SERVICE}.search.windows.net/indexes/${INDEX_NAME}/docs?api-version=2023-07-01&search=${query}`,
+      { headers: { 'api-key': COG_SEARCH_KEY } }
+    );
+
+    // 2. Send query + results to GPT
+    const gptResponse = await axios.post(
+      `${OPENAI_RESOURCE}/openai/deployments/${GPT_DEPLOYMENT}/chat/completions?api-version=2023-07-01-preview`,
+      {
+        messages: [
+          { role: 'system', content: 'Answer questions based on this product data.' },
+          { role: 'user', content: `Query: ${query}\nData: ${JSON.stringify(searchResults.data.value)}` }
+        ]
+      },
+      {
+        headers: {
+          'api-key': OPENAI_KEY,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    res.json({ answer: gptResponse.data.choices[0].message.content });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to get response" });
+  }
+});
+
+// Start backend server
+app.listen(3000, () => console.log("Backend running on http://localhost:3000"));
