@@ -1,63 +1,87 @@
-// server.js
 const express = require("express");
 const axios = require("axios");
-const cors = require("cors");
+const bodyParser = require("body-parser");
 
 const app = express();
-app.use(express.json());
-app.use(cors());
+app.use(bodyParser.json());
 
-// Replace these 5 values with your Azure details
-const COG_SEARCH_SERVICE = "<your-search-service>";       // e.g., products-search
-const COG_SEARCH_KEY = "<search-admin-key>";             // Cognitive Search Admin Key
-const INDEX_NAME = "products-index";                     // Your index name
-const OPENAI_RESOURCE = "<your-openai-resource>";        // e.g., https://my-openai-demo.openai.azure.com
-const OPENAI_KEY = "<your-openai-key>";                 // Azure OpenAI Key
-const GPT_DEPLOYMENT = "<deployment-name>";             // e.g., products-gpt-deployment
+// ------------------------
+// Cognitive Search Config
+// ------------------------
+const COG_SEARCH_SERVICE = "<YOUR_SEARCH_SERVICE>";
+const COG_SEARCH_KEY = "<YOUR_SEARCH_ADMIN_KEY>";
+const INDEX_NAME = "products-index";
 
+// ------------------------
+// AI Foundry / GPT Config
+// ------------------------
+const OPENAI_RESOURCE = "https://<YOUR_FOUNDY_ENDPOINT>";
+const OPENAI_KEY = "<YOUR_API_KEY>";
+const GPT_DEPLOYMENT = "<YOUR_DEPLOYMENT_NAME>";
+const API_VERSION = "2023-03-15-preview";
+
+// ------------------------
+// Endpoint to handle frontend query
+// ------------------------
 app.post("/api/query", async (req, res) => {
-  const query = req.body.prompt;
+  const prompt = req.body.prompt;
 
   try {
-    // 1. Fetch results from Cognitive Search
-    const searchResults = await axios.get(
-      `https://${COG_SEARCH_SERVICE}.search.windows.net/indexes/${INDEX_NAME}/docs?api-version=2023-07-01&search=${query}`,
-      { headers: { 'api-key': COG_SEARCH_KEY } }
-    );
-
-    // 2. Send query + results to GPT
-    const gptResponse = await axios.post(
-      `${OPENAI_RESOURCE}/openai/deployments/${GPT_DEPLOYMENT}/chat/completions?api-version=2023-07-01-preview`,
+    // 1️⃣ Query Cognitive Search
+    const searchResponse = await axios.get(
+      `https://${COG_SEARCH_SERVICE}.search.windows.net/indexes/${INDEX_NAME}/docs`,
       {
-        messages: [
-          { role: 'system', content: 'Answer questions based on this product data.' },
-          { role: 'user', content: `Query: ${query}\nData: ${JSON.stringify(searchResults.data.value)}` }
-        ]
-      },
-      {
+        params: { 
+          'api-version': '2021-04-30-Preview',
+          search: prompt
+        },
         headers: {
-          'api-key': OPENAI_KEY,
-          'Content-Type': 'application/json'
+          "api-key": COG_SEARCH_KEY
         }
       }
     );
 
-    res.json({ answer: gptResponse.data.choices[0].message.content });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to get response" });
+    const searchResults = searchResponse.data.value;
+
+    // Prepare text for GPT
+    let combinedText = "Products found:\n";
+    searchResults.forEach((item, idx) => {
+      combinedText += `${idx + 1}. ${item.productName} - ${item.price}\n`;
+    });
+    combinedText += `\nAnswer the user query: ${prompt}`;
+
+    // 2️⃣ Call GPT deployment
+    const gptResponse = await axios.post(
+      `${OPENAI_RESOURCE}/openai/deployments/${GPT_DEPLOYMENT}/chat/completions?api-version=${API_VERSION}`,
+      {
+        messages: [{ role: "user", content: combinedText }]
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": OPENAI_KEY
+        }
+      }
+    );
+
+    const gptText = gptResponse.data.choices[0].message.content;
+
+    // 3️⃣ Send JSON to frontend
+    res.json({
+      searchResults: searchResults,
+      gptResponse: gptText
+    });
+    
+  } catch (error) {
+    console.error(error.response ? error.response.data : error.message);
+    res.status(500).json({ error: "Something went wrong" });
   }
 });
 
-// Start backend server
-app.listen(3000, () => console.log("Backend running on http://localhost:3000"));
-
-curl -X POST http://localhost:3000/api/query -H "Content-Type: application/json" -d "{\"prompt\":\"show me shoes\"}"
-
-curl -X GET "https://mysearchservice.search.windows.net/indexes/products-index/docs?api-version=2023-07-01&search=shoes" -H "api-key: YOUR_ADMIN_KEY"
-curl -X POST "https://myopenairesource.openai.azure.com/openai/deployments/gpt-35-turbo/chat/completions?api-version=2023-07-01-preview" ^
--H "Content-Type: application/json" ^
--H "api-key: YOUR_OPENAI_KEY" ^
--d "{ \"messages\": [{\"role\": \"user\", \"content\": \"Hello from Azure OpenAI\"}] }"
-
-
+// ------------------------
+// Start Server
+// ------------------------
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Backend running at http://localhost:${PORT}`);
+});
