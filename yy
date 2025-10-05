@@ -100,3 +100,8 @@ export class Home {
     </div>
   </section>
 </div>
+
+curl -X POST http://localhost:3000/api/query \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"Show me shoes under 1000"}'
+
