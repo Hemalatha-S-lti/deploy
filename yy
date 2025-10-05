@@ -135,3 +135,65 @@ export class Home {
     return !((this.prompt ?? '').trim()) || this.isSubmitting;
   }
 }
+
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+@Component({
+  selector: 'app-home',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './home.html',
+  styleUrls: ['./home.css']
+})
+export class Home {
+  prompt: string = '';
+  isSubmitting = false;
+
+  // Array to store submitted prompts and GPT responses
+  submittedPrompts: string[] = [];
+
+  // Submit prompt to backend
+  submitPrompt(): void {
+    const text = this.prompt.trim();
+    if (!text || this.isSubmitting) return;
+
+    this.isSubmitting = true;
+
+    fetch("http://localhost:5000/api/query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: text })
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log("Backend response:", data); // Debugging
+
+        // Safely get GPT response
+        const gptResponse = data.response ?? data.error ?? "No response from GPT";
+
+        // Store question + GPT response
+        this.submittedPrompts.push(`Q: ${text}\nA: ${gptResponse}`);
+        this.prompt = '';
+        this.isSubmitting = false;
+      })
+      .catch(err => {
+        console.error("Error fetching response:", err);
+        this.submittedPrompts.push(`Q: ${text}\nA: Error fetching response`);
+        this.isSubmitting = false;
+      });
+  }
+
+  // Clear the prompt textarea
+  clearPrompt(): void {
+    if (this.isSubmitting) return;
+    this.prompt = '';
+  }
+
+  // Disable submit button if no text or submitting
+  get isSubmitDisabled(): boolean {
+    return !((this.prompt ?? '').trim()) || this.isSubmitting;
+  }
+}
+
