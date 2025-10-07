@@ -1,87 +1,3 @@
-html
-<div class="home-center dark-theme">
-  <section class="prompt-card" role="region" aria-labelledby="promptTitle">
-    <h2 class="title" id="promptTitle">Ask Anything</h2>
-    <p class="subtitle">Type your question or search query below and get instant results.</p>
-
-    <label class="sr-only" for="promptInput">Your prompt</label>
-    <textarea
-      id="promptInput"
-      class="prompt-input"
-      [(ngModel)]="prompt"
-      placeholder="Type your prompt here…"
-      (keydown.control.enter)="submitPrompt()"
-      (keydown.meta.enter)="submitPrompt()"
-      [attr.aria-busy]="isSubmitting"
-    ></textarea>
-
-    <div class="actions">
-      <button
-        class="clear-btn"
-        type="button"
-        (click)="clearPrompt()"
-        [disabled]="!prompt.length || isSubmitting"
-        [attr.aria-disabled]="!prompt.length || isSubmitting"
-      >
-        Clear
-      </button>
-
-      <button
-        class="primary-btn"
-        type="button"
-        (click)="submitPrompt()"
-        [disabled]="isSubmitDisabled"
-        [attr.aria-disabled]="isSubmitDisabled"
-      >
-        {{ isSubmitting ? 'Submitting…' : 'Submit' }}
-      </button>
-    </div>
-
-    <div *ngIf="summary" class="summary" aria-live="polite">
-      <h3>Summary</h3>
-      <p>{{ summary }}</p>
-    </div>
-
-    <div *ngIf="submittedPrompts.length > 0" class="submitted-prompts">
-      <h3 class="submitted-title">Submitted Prompts</h3>
-      <div *ngFor="let p of submittedPrompts; trackBy: p.prompt" class="prompt-card-small">
-        <p>
-          "<strong>{{ p.prompt }}</strong>" — <strong>{{ p.count }}</strong> result{{ p.count === 1 ? '' : 's' }}
-          <button
-            class="toggle-summary-btn"
-            (click)="p.show = !p.show"
-            aria-label="Toggle summary"
-            [attr.aria-expanded]="p.show ?? false"
-          >
-            <span [class.rotated]="p.show">▼</span>
-          </button>
-        </p>
-
-        <div *ngIf="p.show" class="summary-content" aria-live="polite">
-          <p><strong>Summary:</strong> <em>{{ p.summary }}</em></p>
-        </div>
-      </div>
-    </div>
-
-    <div *ngIf="results.length > 0" class="api-results" aria-live="polite">
-      <h3 class="submitted-title">Search Results ({{ resultCount }} profiles found)</h3>
-      <article *ngFor="let profile of results; trackBy: profile.recordid" class="profile-card">
-        <header>
-          <h4>{{ profile.Name }} <span class="role">({{ profile.Role }})</span></h4>
-        </header>
-        <ul>
-          <li><strong>Skills:</strong> {{ profile.Skills }}</li>
-          <li><strong>Experience:</strong> {{ profile.ExperienceYears }} years</li>
-          <li><strong>Industry:</strong> {{ profile.Industry }}</li>
-          <li><strong>Location:</strong> {{ profile.Location }}</li>
-          <li><strong>Summary:</strong> {{ profile.ProfileSummary }}</li>
-        </ul>
-      </article>
-    </div>
-  </section>
-</div>
-
-css
 /* General page setup */
 html, body {
   height: 100%;
@@ -89,7 +5,7 @@ html, body {
   font-family: 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Centering wrapper + dark page background */
+/* Center wrapper + dark background */
 .home-center.dark-theme {
   display: grid;
   place-items: center;
@@ -107,29 +23,22 @@ html, body {
   border-radius: 16px;
   padding: 28px 24px;
   box-shadow: 0 25px 50px rgba(0,0,0,0.4);
-  animation: floatIn 0.5s ease-out both;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+  animation: floatIn 0.5s ease-out both;
 }
 
-/* Title and Subtitle */
+/* Title */
 .title {
   font-size: 1.6rem;
   color: #00bcd4;
-  margin: 0;
   font-weight: 700;
+  margin: 0;
   text-align: center;
 }
 
-.subtitle {
-  font-size: 0.95rem;
-  color: #a3b0c3;
-  text-align: center;
-  margin-bottom: 16px;
-}
-
-/* Textarea Input */
+/* Textarea input */
 .prompt-input {
   width: 100%;
   min-height: 140px;
@@ -289,3 +198,101 @@ html, body {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+
+<div class="home-center dark-theme" style="--header-h: 0px">
+  <section class="prompt-card" role="region" aria-labelledby="promptTitle">
+    <h2 class="title" id="promptTitle">Ask anything</h2>
+
+    <label class="sr-only" for="promptInput">Your prompt</label>
+    <textarea
+      id="promptInput"
+      class="prompt-input"
+      [(ngModel)]="prompt"
+      placeholder="Type your prompt here…"
+      (keydown.control.enter)="submitPrompt()"
+      (keydown.meta.enter)="submitPrompt()"
+      [attr.aria-busy]="isSubmitting"
+    ></textarea>
+
+    <div class="actions">
+      <button
+        class="clear-btn"
+        type="button"
+        (click)="clearPrompt()"
+        [disabled]="!prompt.length || isSubmitting"
+        [attr.aria-disabled]="!prompt.length || isSubmitting"
+      >
+        Clear
+      </button>
+
+      <button
+        class="primary-btn"
+        type="button"
+        (click)="submitPrompt()"
+        [disabled]="isSubmitDisabled"
+        [attr.aria-disabled]="isSubmitDisabled"
+      >
+        {{ isSubmitting ? 'Submitting…' : 'Submit' }}
+      </button>
+    </div>
+
+    @if (summary) {
+    <div class="summary" aria-live="polite">
+      <h3>Summary</h3>
+      <p>{{ summary }}</p>
+    </div>
+    }@if (submittedPrompts.length > 0) {
+    <div class="submitted-prompts">
+      <h3 class="submitted-title">Submitted Prompts:</h3>
+
+      @for (p of submittedPrompts; track p.prompt) {
+      <div class="prompt-card-small">
+        <p>
+          "<strong>{{ p.prompt }}</strong
+          >" — <strong>{{ p.count }}</strong> result{{ p.count === 1 ? '' : 's' }}
+          <button
+            class="toggle-summary-btn"
+            (click)="p.show = !p.show"
+            aria-label="Toggle summary"
+            aria-expanded="{{ p.show ?? false }}"
+          >
+            <span [class.rotated]="p.show">▼</span>
+          </button>
+        </p>
+
+        @if (p.show) {
+        <div class="summary-content" aria-live="polite">
+          <p>
+            <strong>Summary:</strong> <em>{{ p.summary }}</em>
+          </p>
+        </div>
+        }
+      </div>
+      }
+    </div>
+    }@if (results.length > 0) {
+    <div class="api-results" aria-live="polite">
+      <h3 class="submitted-title">Search Results ({{ resultCount }} profiles found)</h3>
+      @for (profile of results; track profile.recordid) {
+      <article class="profile-card">
+        <header>
+          <h4>
+            {{ profile.Name }}
+            <span class="role">({{ profile.Role }})</span>
+          </h4>
+        </header>
+        <ul>
+          <li><strong>Skills:</strong> {{ profile.Skills }}</li>
+          <li><strong>Experience:</strong> {{ profile.ExperienceYears }} years</li>
+          <li><strong>Industry:</strong> {{ profile.Industry }}</li>
+          <li><strong>Location:</strong> {{ profile.Location }}</li>
+          <li><strong>Summary:</strong> {{ profile.ProfileSummary }}</li>
+        </ul>
+      </article>
+      }
+    </div>
+    }
+  </section>
+</div>
+
