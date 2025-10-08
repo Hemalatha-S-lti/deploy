@@ -2,32 +2,18 @@
   <!-- Left Column: Prompt Section & History -->
   <div class="prompt-section">
     <div class="prompt-card">
-      <h2 class="title">Azure AI Search</h2>
+      <h2 class="title">Azure AI search</h2>
       <p class="subtitle">AutoMates</p>
 
-      <!-- Tagline -->
-      <p class="tagline">Semantic search that knows what you mean.</p>
-
-      <!-- Prompt input with future voice icon -->
-      <div class="prompt-input-wrapper">
-        <label class="sr-only" for="promptInput">Your prompt</label>
-        <textarea
-          id="promptInput"
-          class="prompt-input"
-          [(ngModel)]="prompt"
-          placeholder="e.g., 'cloud architect with Azure skills'"
-          (keydown.control.enter)="submitPrompt()"
-          (keydown.meta.enter)="submitPrompt()"
-        ></textarea>
-        <!-- Microphone icon placeholder (safe for future) -->
-        <span class="voice-icon" title="Voice search coming soon">🎤</span>
-      </div>
-
-      <!-- Validation messages -->
-      <p *ngIf="!prompt" class="validation-msg">Prompt cannot be empty.</p>
-      <p *ngIf="prompt && prompt.length < 3" class="validation-msg">
-        Please enter at least 3 characters.
-      </p>
+      <label class="sr-only" for="promptInput">Your prompt</label>
+      <textarea
+        id="promptInput"
+        class="prompt-input"
+        [(ngModel)]="prompt"
+        placeholder="e.g., 'cloud architect with Azure skills'"
+        (keydown.control.enter)="submitPrompt()"
+        (keydown.meta.enter)="submitPrompt()"
+      ></textarea>
 
       <div class="actions">
         <button
@@ -42,147 +28,184 @@
           class="primary-btn"
           type="button"
           (click)="submitPrompt()"
-          [disabled]="!prompt || prompt.length < 3 || isSubmitting"
+          [disabled]="isSubmitDisabled"
         >
-          <span *ngIf="isSubmitting" class="spinner"></span>
-          <span *ngIf="!isSubmitting">Find Candidates</span>
+          <ng-container *ngIf="isSubmitting; else normalText">
+            <span class="spinner"></span>
+          </ng-container>
+          <ng-template #normalText>
+            <span>Find Candidates</span>
+          </ng-template>
         </button>
       </div>
     </div>
 
-    <!-- Previously submitted prompts -->
-    @if (submittedPrompts.length > 0) {
-      <div class="submitted-prompts">
-        <h3 class="submitted-title">Recent Searches</h3>
-        @for (p of submittedPrompts.slice().reverse(); track p.prompt) {
-          <div class="prompt-card-small">
-            <div class="prompt-history-header" (click)="p.show = !p.show">
-              <span>"<strong>{{ p.prompt }}</strong>" ({{ p.count }})</span>
-              <span class="toggle-arrow" [class.rotated]="p.show">▼</span>
-            </div>
-            @if (p.show) {
-              <div class="summary-content">
-                <p><strong>Summary:</strong> <em>{{ p.summary }}</em></p>
-              </div>
-            }
-          </div>
-        }
+    <!-- Section for previously submitted prompts with expandable summaries -->
+    <div class="submitted-prompts" *ngIf="submittedPrompts.length > 0">
+      <h3 class="submitted-title">Recent Searches</h3>
+      <div
+        class="prompt-card-small"
+        *ngFor="let p of submittedPrompts.slice().reverse(); trackBy: trackByPrompt"
+      >
+        <div class="prompt-history-header" (click)="p.show = !p.show">
+          <span>"<strong>{{ p.prompt }}</strong>" ({{ p.count }})</span>
+          <span class="toggle-arrow" [class.rotated]="p.show">▼</span>
+        </div>
+        <div class="summary-content" *ngIf="p.show">
+          <p>
+            <strong>Summary:</strong> <em>{{ p.summary }}</em>
+          </p>
+        </div>
       </div>
-    }
+    </div>
   </div>
 
   <!-- Right Column: Results Section -->
   <div class="results-section">
-    @if (results.length > 0) {
+    <div *ngIf="results.length > 0; else placeholder">
       <div class="results-header">
         <h3>Showing {{ resultCount }} results for:</h3>
         <p class="last-prompt">"{{ lastPrompt }}"</p>
       </div>
 
-      @if (summary) {
-        <div class="summary-card">
-          <h4>AI Summary</h4>
-          <p>{{ summary }}</p>
-        </div>
-      }
+      <div class="summary-card" *ngIf="summary">
+        <h4>AI Summary</h4>
+        <p>{{ summary }}</p>
+      </div>
 
-      @if (intent || searchRequest) {
-        <details class="details-dropdown">
-          <summary>Show Search Details</summary>
-          @if (intent) {
-            <h4>Intent</h4>
-            <pre class="code-block">{{ intent | json }}</pre>
-          }
-          @if (searchRequest) {
-            <h4>Azure Search Request</h4>
-            <pre class="code-block">{{ searchRequest | json }}</pre>
-          }
-        </details>
-      }
+      <!-- Collapsible section for search details -->
+      <details class="details-dropdown" *ngIf="intent || searchRequest">
+        <summary>Show Search Details</summary>
+        <div *ngIf="intent">
+          <h4>Intent</h4>
+          <pre class="code-block">{{ intent | json }}</pre>
+        </div>
+        <div *ngIf="searchRequest">
+          <h4>Azure Search Request</h4>
+          <pre class="code-block">{{ searchRequest | json }}</pre>
+        </div>
+      </details>
 
       <div class="profile-grid">
-        @for (profile of results; track profile.recordid; let i = $index) {
-          <div class="profile-card" [style.animation-delay]="i * 100 + 'ms'">
-            <div class="profile-header">
-              <div class="profile-avatar">{{ profile.Name | slice : 0 : 1 }}</div>
-              <div class="profile-info">
-                <h4 class="profile-name">{{ profile.Name }}</h4>
-                <p class="profile-role">{{ profile.Role }}</p>
-              </div>
+        <div
+          class="profile-card"
+          *ngFor="let profile of results; let i = index; trackBy: trackByRecordId"
+          [style.animation-delay]="i * 100 + 'ms'"
+        >
+          <div class="profile-header">
+            <div class="profile-avatar">{{ profile.Name | slice : 0 : 1 }}</div>
+            <div class="profile-info">
+              <h4 class="profile-name">{{ profile.Name }}</h4>
+              <p class="profile-role">{{ profile.Role }}</p>
             </div>
-            <div class="profile-body">
-              <p class="profile-summary">{{ profile.ProfileSummary }}</p>
-              <div class="profile-details">
-                <span><strong>Location:</strong> {{ profile.Location }}</span>
-                <span><strong>Experience:</strong> {{ profile.ExperienceYears }} years</span>
-                <span><strong>Industry:</strong> {{ profile.Industry }}</span>
-              </div>
-              <div class="profile-skills">
-                <strong>Skills:</strong>
-                <div class="skills-tags">
-                  @for (skill of profile.Skills.split(', '); track skill) {
-                    <span class="skill-tag">{{ skill }}</span>
-                  }
-                </div>
+          </div>
+          <div class="profile-body">
+            <p class="profile-summary">{{ profile.ProfileSummary }}</p>
+            <div class="profile-details">
+              <span><strong>Location:</strong> {{ profile.Location }}</span>
+              <span><strong>Experience:</strong> {{ profile.ExperienceYears }} years</span>
+              <span><strong>Industry:</strong> {{ profile.Industry }}</span>
+            </div>
+            <div class="profile-skills">
+              <strong>Skills:</strong>
+              <div class="skills-tags">
+                <span *ngFor="let skill of profile.Skills.split(', ')" class="skill-tag">
+                  {{ skill }}
+                </span>
               </div>
             </div>
           </div>
-        }
+        </div>
       </div>
-    } @else {
+    </div>
+
+    <ng-template #placeholder>
       <div class="placeholder">
         <div class="placeholder-icon">📄</div>
         <h3>Your results will appear here</h3>
         <p>Enter a prompt to find candidates.</p>
       </div>
-    }
+    </ng-template>
   </div>
 </div>
 
 
-/* Tagline styling */
-.tagline {
-  font-size: 1rem;
-  font-style: italic;
-  color: var(--text-secondary);
-  margin-bottom: 1rem;
-}
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { SearchService } from '../api/search-search';
 
-/* Validation messages */
-.validation-msg {
-  color: #ff6666;
-  font-size: 0.9rem;
-  margin: 0.25rem 0 0 0;
-}
+@Component({
+  selector: 'app-home',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './home.html',
+  styleUrls: ['./home.css'],
+})
+export class Home {
+  prompt: string = '';
+  isSubmitting = false;
+  lastPrompt: string = '';
 
-/* Wrapper for input + voice icon */
-.prompt-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
+  submittedPrompts: { prompt: string; count: number; summary: string; show?: boolean }[] = [];
+  results: any[] = [];
+  resultCount: number = 0;
+  summary: string = '';
+  intent: any = null;
+  searchRequest: any = null;
 
-.prompt-input-wrapper .prompt-input {
-  flex-grow: 1;
-  padding-right: 2.5rem; /* space for icon */
-  transition: box-shadow 0.3s, border-color 0.3s;
-}
+  constructor(private searchService: SearchService) {}
 
-.prompt-input-wrapper .prompt-input:focus {
-  box-shadow: 0 0 8px rgba(63, 81, 181, 0.5);
-  border-color: var(--primary-color);
-}
+  submitPrompt(): void {
+    const text = this.prompt.trim();
+    if (!text || this.isSubmitting) return;
 
-/* Voice icon placeholder */
-.voice-icon {
-  position: absolute;
-  right: 0.75rem;
-  cursor: pointer;
-  font-size: 1.2rem;
-  color: var(--text-secondary);
-  transition: color 0.3s;
-}
+    this.isSubmitting = true;
+    this.results = [];
+    this.summary = '';
+    this.intent = null;
+    this.searchRequest = null;
 
-.voice-icon:hover {
-  color: var(--primary-color);
+    this.searchService.searchProfiles(text).subscribe({
+      next: (response) => {
+        this.lastPrompt = text;
+        this.intent = response.intent;
+        this.searchRequest = response.azure_search_request;
+        this.results = response.results || [];
+        this.summary = response.summary || '';
+        this.resultCount = this.results.length;
+
+        this.submittedPrompts.push({
+          prompt: text,
+          count: this.resultCount,
+          summary: this.summary,
+          show: false,
+        });
+
+        this.prompt = '';
+        this.isSubmitting = false;
+      },
+      error: (err) => {
+        console.error('API error:', err);
+        this.isSubmitting = false;
+      },
+    });
+  }
+
+  clearPrompt(): void {
+    if (this.isSubmitting) return;
+    this.prompt = '';
+  }
+
+  get isSubmitDisabled(): boolean {
+    return !(this.prompt ?? '').trim() || this.isSubmitting;
+  }
+
+  trackByPrompt(index: number, item: any) {
+    return item.prompt;
+  }
+
+  trackByRecordId(index: number, item: any) {
+    return item.recordid;
+  }
 }
