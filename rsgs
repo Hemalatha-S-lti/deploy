@@ -1,16 +1,16 @@
 <div class="home-container">
-  <!-- Left Column: Prompt Section & History -->
+  <!-- Prompt Section in Center -->
   <div class="prompt-section">
-    <div class="prompt-card centered-card">
-      <h2 class="title">TalentAI</h2>
-      <p class="subtitle">Discover Top Talent Instantly</p>
+    <div class="prompt-card">
+      <h2 class="title">Semantic Search</h2>
+      <p class="subtitle">Explore Smart Insights</p>
 
-      <label class="sr-only" for="promptInput">Enter your search prompt</label>
+      <label class="sr-only" for="promptInput">Your prompt</label>
       <textarea
         id="promptInput"
         class="prompt-input"
         [(ngModel)]="prompt"
-        placeholder="Type a skill, role, or keyword e.g., 'Cloud Architect with Azure skills'"
+        placeholder="Type here... e.g., 'cloud architect with Azure skills'"
         (keydown.control.enter)="submitPrompt()"
         (keydown.meta.enter)="submitPrompt()"
       ></textarea>
@@ -30,22 +30,17 @@
           (click)="submitPrompt()"
           [disabled]="isSubmitDisabled"
         >
-          <ng-container *ngIf="isSubmitting; else submitText">
-            <span class="spinner"></span>
-          </ng-container>
-          <ng-template #submitText>Search</ng-template>
+          <span *ngIf="isSubmitting" class="spinner"></span>
+          <span *ngIf="!isSubmitting">Find Insights</span>
         </button>
       </div>
     </div>
 
-    <!-- Recently submitted prompts -->
+    <!-- Previously Submitted Prompts -->
     <div *ngIf="submittedPrompts.length > 0" class="submitted-prompts">
       <h3 class="submitted-title">Recent Searches</h3>
-      <div
-        class="prompt-card-small"
-        *ngFor="let p of submittedPrompts.slice().reverse(); let i = index; trackBy: trackByPrompt"
-      >
-        <div class="prompt-history-header" (click)="toggleSummary(submittedPrompts.length - 1 - i)">
+      <div *ngFor="let p of submittedPrompts.slice().reverse()" class="prompt-card-small">
+        <div class="prompt-history-header" (click)="p.show = !p.show">
           "<strong>{{ p.prompt }}</strong>" ({{ p.count }})
           <span class="toggle-arrow" [class.rotated]="p.show">▼</span>
         </div>
@@ -58,11 +53,11 @@
     </div>
   </div>
 
-  <!-- Right Column: Results Section -->
+  <!-- Results Section -->
   <div class="results-section">
-    <div *ngIf="results.length > 0; else placeholder">
+    <div *ngIf="results.length > 0">
       <div class="results-header">
-        <h3>Showing {{ resultCount }} candidates for:</h3>
+        <h3>Showing {{ resultCount }} results for:</h3>
         <p class="last-prompt">"{{ lastPrompt }}"</p>
       </div>
 
@@ -84,11 +79,7 @@
       </details>
 
       <div class="profile-grid">
-        <div
-          class="profile-card"
-          *ngFor="let profile of results; let i = index; trackBy: trackByResult"
-          [style.animation-delay]="i * 100 + 'ms'"
-        >
+        <div *ngFor="let profile of results; let i = index" class="profile-card" [style.animation-delay]="i * 100 + 'ms'">
           <div class="profile-header">
             <div class="profile-avatar">{{ profile.Name | slice:0:1 }}</div>
             <div class="profile-info">
@@ -106,9 +97,7 @@
             <div class="profile-skills">
               <strong>Skills:</strong>
               <div class="skills-tags">
-                <span class="skill-tag" *ngFor="let skill of profile.Skills.split(', ')">
-                  {{ skill }}
-                </span>
+                <span *ngFor="let skill of profile.Skills.split(', ')" class="skill-tag">{{ skill }}</span>
               </div>
             </div>
           </div>
@@ -116,108 +105,93 @@
       </div>
     </div>
 
-    <ng-template #placeholder>
-      <div class="placeholder">
-        <div class="placeholder-icon">✨</div>
-        <h3>Welcome to TalentAI</h3>
-        <p>Type a skill or role above to instantly find top talent.</p>
-      </div>
-    </ng-template>
+    <div *ngIf="results.length === 0" class="placeholder">
+      <div class="placeholder-icon">📄</div>
+      <h3>Your insights will appear here</h3>
+      <p>Type a prompt to explore smart results.</p>
+    </div>
   </div>
 </div>
 
 
 :root {
-  --background-dark: #0e0e0e;
-  --background-light: #1f1f1f;
-  --primary-color: #4caf50;
-  --primary-hover: #43a047;
+  --background-dark: #121212;
+  --background-light: #1e1e1e;
+  --primary-color: #3f51b5;
+  --primary-hover: #303f9f;
   --text-primary: #ffffff;
   --text-secondary: #b0b0b0;
-  --border-color: #333;
-  --card-shadow: 0 15px 40px rgba(0,0,0,0.6);
-  --font-style: 'Poppins', sans-serif;
+  --border-color: #333333;
+  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 html, body {
   height: 100%;
   margin: 0;
-  font-family: var(--font-style);
-  background: var(--background-dark);
+  font-family: 'Segoe UI', 'Roboto', sans-serif;
+  background-color: var(--background-dark);
   color: var(--text-primary);
 }
 
 .home-container {
   display: flex;
-  height: 100vh;
-  overflow: hidden;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-}
-
-/* Left Column */
-.prompt-section {
-  width: 40%;
-  min-width: 420px;
+  justify-content: flex-start;
   padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: var(--background-light);
-  border-radius: 15px;
-  box-shadow: var(--card-shadow);
+  min-height: 100vh;
 }
 
-.centered-card {
+/* Centered Prompt Section */
+.prompt-section {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  max-width: 600px;
+  background-color: var(--background-light);
+  padding: 2rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+  margin-bottom: 2rem;
 }
 
+/* Title & Subtitle */
 .title {
-  font-size: 2.3rem;
-  font-weight: 800;
+  font-size: 2.5rem;
+  font-weight: 700;
   color: var(--primary-color);
-  margin-bottom: 0.3rem;
-  letter-spacing: 1px;
+  margin: 0;
+  text-align: center;
 }
 
 .subtitle {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   color: var(--text-secondary);
-  margin-bottom: 1.5rem;
+  margin: 0.5rem 0 2rem 0;
   text-align: center;
-  line-height: 1.3rem;
 }
 
+/* Prompt Input */
 .prompt-input {
   width: 100%;
-  min-height: 140px;
-  background: #2b2b2b;
-  color: #fff;
+  min-height: 180px;
+  background-color: #2c2c2c;
+  color: #ffffff;
   font-size: 1.1rem;
   font-weight: 500;
-  font-family: var(--font-style);
-  border-radius: 12px;
+  font-family: 'Segoe UI', 'Roboto', sans-serif;
   border: 1px solid var(--border-color);
-  padding: 1rem 1.2rem;
-  outline: none;
+  border-radius: 12px;
+  padding: 1rem;
   resize: vertical;
-  box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+  outline: none;
 }
 
 .prompt-input::placeholder {
-  color: #aaa;
+  color: #bbbbbb;
   font-style: italic;
 }
 
-.prompt-input:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 10px rgba(76,175,80,0.5);
-}
-
-/* Buttons */
+/* Actions Buttons */
 .actions {
   display: flex;
   justify-content: center;
@@ -225,33 +199,43 @@ html, body {
   margin-top: 1.5rem;
 }
 
-.clear-btn, .primary-btn {
-  padding: 0.7rem 1.6rem;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
+.clear-btn,
+.primary-btn {
+  padding: 0.8rem 2rem;
   font-size: 1rem;
-  transition: all 0.3s ease;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .clear-btn {
-  background: transparent;
+  background-color: transparent;
   color: var(--text-secondary);
   border: 1px solid var(--border-color);
 }
 
-.clear-btn:hover { background: #333; }
+.clear-btn:hover {
+  background-color: #333;
+}
 
 .primary-btn:not(:disabled) {
-  background: var(--primary-color);
-  color: #fff;
+  background-color: var(--primary-color);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .primary-btn:not(:disabled):hover {
-  background: var(--primary-hover);
+  background-color: var(--primary-hover);
 }
 
-.primary-btn:disabled { background: #555; color: #888; cursor: not-allowed; }
+.primary-btn:disabled {
+  background-color: #555;
+  color: #a0a0a0;
+  cursor: not-allowed;
+}
 
 .spinner {
   width: 20px;
@@ -259,80 +243,92 @@ html, body {
   border: 3px solid rgba(255,255,255,0.3);
   border-top-color: #fff;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 1s ease-in-out infinite;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Recent Searches */
-.submitted-prompts {
-  margin-top: 2rem;
-  width: 100%;
-}
-
-.prompt-card-small {
-  background: rgba(76,175,80,0.1);
-  padding: 10px 14px;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  cursor: pointer;
-}
-
-.summary-content {
-  margin-top: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(76,175,80,0.15);
-  border-left: 4px solid var(--primary-color);
-  border-radius: 6px;
-}
+/* Submitted Prompts & Summary */
+.submitted-prompts { margin-top: 16px; }
+.submitted-title { text-align: center; font-weight: 600; font-size: 1rem; color: var(--primary-color); }
+.prompt-card-small { background: rgba(141,148,179,0.2); padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; }
+.summary-content { margin-top: 0.5rem; padding: 0.75rem 1rem; background-color: rgba(255,255,255,0.05); border-left: 4px solid #00bcd4; border-radius: 6px; }
 
 /* Results Section */
-.results-section {
-  flex-grow: 1;
-  padding: 2rem;
-  overflow-y: auto;
-  margin-left: 2rem;
-}
+.results-section { width: 100%; max-width: 900px; }
 
-.profile-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill,minmax(280px,1fr));
-  gap: 1.5rem;
-}
+.profile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
 
-.profile-card {
-  background: #1f1f1f;
-  border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 5px 25px rgba(0,0,0,0.6);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  opacity: 0;
-  transform: translateY(20px);
-  animation: slideInUp 0.5s forwards;
-}
+.profile-card { background-color: var(--background-light); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3); opacity: 0; transform: translateY(20px); animation: slideInUp 0.5s forwards; }
 
-.profile-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 35px rgba(0,0,0,0.7);
-}
+.profile-header { display: flex; align-items: center; margin-bottom: 1rem; }
+.profile-avatar { width:50px; height:50px; border-radius:50%; background-color:var(--primary-color); color:white; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:600; margin-right:1rem; }
+.profile-name { margin:0; font-size:1.25rem; }
+.profile-role { margin:0; color:var(--text-secondary); }
 
-.profile-header { display:flex; align-items:center; margin-bottom:0.5rem; }
-.profile-avatar { width:50px; height:50px; border-radius:50%; background: var(--primary-color); display:flex; align-items:center; justify-content:center; font-weight:700; margin-right:1rem; font-size:1.2rem; }
-
-.profile-name { margin:0; font-weight:700; }
-.profile-role { margin:0; color: var(--text-secondary); }
-
-.profile-details span { display:block; font-size:0.9rem; margin-bottom:0.2rem; }
-
+.profile-body { margin-top: 0.5rem; }
+.profile-summary { margin-bottom:1rem; color:var(--text-secondary); }
+.profile-details { display:flex; flex-wrap:wrap; gap:1rem; margin-bottom:1rem; font-size:0.9rem; }
 .skills-tags { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem; }
-.skill-tag { background:#333; color:#aaa; padding:0.25rem 0.75rem; border-radius:15px; font-size:0.8rem; }
+.skill-tag { background-color:#333; color:var(--text-secondary); padding:0.25rem 0.75rem; border-radius:15px; font-size:0.8rem; }
 
-.placeholder { display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; margin-top:5rem; color:var(--text-secondary); }
+.placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; color:var(--text-secondary); }
 .placeholder-icon { font-size:4rem; margin-bottom:1rem; }
 
-/* Animations */
-@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-@keyframes slideInUp { from { opacity:0; transform:translateY(20px);} to { opacity:1; transform:translateY(0); } }
+@keyframes slideInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 
-.toggle-arrow { float:right; transition:0.3s ease; }
-.toggle-arrow.rotated { transform: rotate(180deg); }
+
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { SearchService } from '../api/search-search';
+
+@Component({
+  selector: 'app-home',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './home.html',
+  styleUrl: './home.css',
+})
+export class Home {
+  prompt: string = '';
+  isSubmitting = false;
+  lastPrompt: string = '';
+  submittedPrompts: { prompt: string; count: number; summary: string; show?: boolean }[] = [];
+  results: any[] = [];
+  resultCount: number = 0;
+  summary: string = '';
+  intent: any = null;
+  searchRequest: any = null;
+
+  constructor(private searchService: SearchService) {}
+
+  submitPrompt(): void {
+    const text = this.prompt.trim();
+    if (!text || this.isSubmitting) return;
+
+    this.isSubmitting = true;
+    this.results = [];
+    this.summary = '';
+    this.intent = null;
+    this.searchRequest = null;
+
+    this.searchService.searchProfiles(text).subscribe({
+      next: (response) => {
+        this.lastPrompt = text;
+        this.intent = response.intent;
+        this.searchRequest = response.azure_search_request;
+        this.results = response.results || [];
+        this.summary = response.summary || '';
+        this.resultCount = this.results.length;
+        this.submittedPrompts.push({ prompt: text, count: this.resultCount, summary: this.summary, show: false });
+        this.prompt = '';
+        this.isSubmitting = false;
+      },
+      error: () => { this.isSubmitting = false; },
+    });
+  }
+
+  clearPrompt(): void { if (!this.isSubmitting) this.prompt = ''; }
+  get isSubmitDisabled(): boolean { return !(this.prompt ?? '').trim() || this.isSubmitting; }
+}
