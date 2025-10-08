@@ -19,7 +19,7 @@
           (keydown.control.enter)="submitPrompt()"
           (keydown.meta.enter)="submitPrompt()"
         ></textarea>
-        <!-- Future voice search icon -->
+        <!-- Microphone icon placeholder (safe for future) -->
         <span class="voice-icon" title="Voice search coming soon">🎤</span>
       </div>
 
@@ -51,88 +51,94 @@
     </div>
 
     <!-- Previously submitted prompts -->
-    <div *ngIf="submittedPrompts.length > 0" class="submitted-prompts">
-      <h3 class="submitted-title">Recent Searches</h3>
-      <div
-        *ngFor="let p of submittedPrompts.slice().reverse(); trackBy: trackByPrompt"
-        class="prompt-card-small"
-      >
-        <div class="prompt-history-header" (click)="p.show = !p.show">
-          <span>"<strong>{{ p.prompt }}</strong>" ({{ p.count }})</span>
-          <span class="toggle-arrow" [class.rotated]="p.show">▼</span>
-        </div>
-        <div *ngIf="p.show" class="summary-content">
-          <p><strong>Summary:</strong> <em>{{ p.summary }}</em></p>
-        </div>
+    @if (submittedPrompts.length > 0) {
+      <div class="submitted-prompts">
+        <h3 class="submitted-title">Recent Searches</h3>
+        @for (p of submittedPrompts.slice().reverse(); track p.prompt) {
+          <div class="prompt-card-small">
+            <div class="prompt-history-header" (click)="p.show = !p.show">
+              <span>"<strong>{{ p.prompt }}</strong>" ({{ p.count }})</span>
+              <span class="toggle-arrow" [class.rotated]="p.show">▼</span>
+            </div>
+            @if (p.show) {
+              <div class="summary-content">
+                <p><strong>Summary:</strong> <em>{{ p.summary }}</em></p>
+              </div>
+            }
+          </div>
+        }
       </div>
-    </div>
+    }
   </div>
 
   <!-- Right Column: Results Section -->
   <div class="results-section">
-    <div *ngIf="results.length > 0">
+    @if (results.length > 0) {
       <div class="results-header">
         <h3>Showing {{ resultCount }} results for:</h3>
         <p class="last-prompt">"{{ lastPrompt }}"</p>
       </div>
 
-      <div *ngIf="summary" class="summary-card">
-        <h4>AI Summary</h4>
-        <p>{{ summary }}</p>
-      </div>
+      @if (summary) {
+        <div class="summary-card">
+          <h4>AI Summary</h4>
+          <p>{{ summary }}</p>
+        </div>
+      }
 
-      <details *ngIf="intent || searchRequest" class="details-dropdown">
-        <summary>Show Search Details</summary>
-        <div *ngIf="intent">
-          <h4>Intent</h4>
-          <pre class="code-block">{{ intent | json }}</pre>
-        </div>
-        <div *ngIf="searchRequest">
-          <h4>Azure Search Request</h4>
-          <pre class="code-block">{{ searchRequest | json }}</pre>
-        </div>
-      </details>
+      @if (intent || searchRequest) {
+        <details class="details-dropdown">
+          <summary>Show Search Details</summary>
+          @if (intent) {
+            <h4>Intent</h4>
+            <pre class="code-block">{{ intent | json }}</pre>
+          }
+          @if (searchRequest) {
+            <h4>Azure Search Request</h4>
+            <pre class="code-block">{{ searchRequest | json }}</pre>
+          }
+        </details>
+      }
 
       <div class="profile-grid">
-        <div
-          *ngFor="let profile of results; let i = index; trackBy: trackByProfile"
-          class="profile-card"
-          [style.animation-delay]="i * 100 + 'ms'"
-        >
-          <div class="profile-header">
-            <div class="profile-avatar">{{ profile.Name | slice : 0 : 1 }}</div>
-            <div class="profile-info">
-              <h4 class="profile-name">{{ profile.Name }}</h4>
-              <p class="profile-role">{{ profile.Role }}</p>
+        @for (profile of results; track profile.recordid; let i = $index) {
+          <div class="profile-card" [style.animation-delay]="i * 100 + 'ms'">
+            <div class="profile-header">
+              <div class="profile-avatar">{{ profile.Name | slice : 0 : 1 }}</div>
+              <div class="profile-info">
+                <h4 class="profile-name">{{ profile.Name }}</h4>
+                <p class="profile-role">{{ profile.Role }}</p>
+              </div>
             </div>
-          </div>
-          <div class="profile-body">
-            <p class="profile-summary">{{ profile.ProfileSummary }}</p>
-            <div class="profile-details">
-              <span><strong>Location:</strong> {{ profile.Location }}</span>
-              <span><strong>Experience:</strong> {{ profile.ExperienceYears }} years</span>
-              <span><strong>Industry:</strong> {{ profile.Industry }}</span>
-            </div>
-            <div class="profile-skills">
-              <strong>Skills:</strong>
-              <div class="skills-tags">
-                <span *ngFor="let skill of profile.Skills.split(', ')" class="skill-tag">
-                  {{ skill }}
-                </span>
+            <div class="profile-body">
+              <p class="profile-summary">{{ profile.ProfileSummary }}</p>
+              <div class="profile-details">
+                <span><strong>Location:</strong> {{ profile.Location }}</span>
+                <span><strong>Experience:</strong> {{ profile.ExperienceYears }} years</span>
+                <span><strong>Industry:</strong> {{ profile.Industry }}</span>
+              </div>
+              <div class="profile-skills">
+                <strong>Skills:</strong>
+                <div class="skills-tags">
+                  @for (skill of profile.Skills.split(', '); track skill) {
+                    <span class="skill-tag">{{ skill }}</span>
+                  }
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        }
       </div>
-    </div>
-
-    <div *ngIf="results.length === 0" class="placeholder">
-      <div class="placeholder-icon">📄</div>
-      <h3>Your results will appear here</h3>
-      <p>Enter a prompt to find candidates.</p>
-    </div>
+    } @else {
+      <div class="placeholder">
+        <div class="placeholder-icon">📄</div>
+        <h3>Your results will appear here</h3>
+        <p>Enter a prompt to find candidates.</p>
+      </div>
+    }
   </div>
 </div>
+
 
 /* Tagline styling */
 .tagline {
@@ -140,14 +146,13 @@
   font-style: italic;
   color: var(--text-secondary);
   margin-bottom: 1rem;
-  transition: color 0.3s;
 }
 
 /* Validation messages */
 .validation-msg {
   color: #ff6666;
   font-size: 0.9rem;
-  margin: 0.5rem 0 0 0;
+  margin: 0.25rem 0 0 0;
 }
 
 /* Wrapper for input + voice icon */
