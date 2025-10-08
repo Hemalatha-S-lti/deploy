@@ -2,15 +2,15 @@
   <!-- Left Column: Prompt Section & History -->
   <div class="prompt-section">
     <div class="prompt-card">
-      <h2 class="title">Azure AI search</h2>
-      <p class="subtitle">AutoMates</p>
+      <h2 class="title">AI Candidate Finder</h2>
+      <p class="subtitle">Smart search powered by Azure AI</p>
 
-      <label class="sr-only" for="promptInput">Your prompt</label>
+      <label class="sr-only" for="promptInput">Enter your search prompt</label>
       <textarea
         id="promptInput"
         class="prompt-input"
         [(ngModel)]="prompt"
-        placeholder="e.g., 'cloud architect with Azure skills'"
+        placeholder="e.g., 'Cloud architect with Azure experience'"
         (keydown.control.enter)="submitPrompt()"
         (keydown.meta.enter)="submitPrompt()"
       ></textarea>
@@ -30,28 +30,26 @@
           (click)="submitPrompt()"
           [disabled]="isSubmitDisabled"
         >
-          <ng-container *ngIf="isSubmitting; else normalText">
+          <ng-container *ngIf="isSubmitting; else submitText">
             <span class="spinner"></span>
           </ng-container>
-          <ng-template #normalText>
-            <span>Find Candidates</span>
-          </ng-template>
+          <ng-template #submitText>Find Candidates</ng-template>
         </button>
       </div>
     </div>
 
-    <!-- Section for previously submitted prompts with expandable summaries -->
-    <div class="submitted-prompts" *ngIf="submittedPrompts.length > 0">
+    <!-- Section for previously submitted prompts -->
+    <div *ngIf="submittedPrompts.length > 0" class="submitted-prompts">
       <h3 class="submitted-title">Recent Searches</h3>
       <div
         class="prompt-card-small"
-        *ngFor="let p of submittedPrompts.slice().reverse(); trackBy: trackByPrompt"
+        *ngFor="let p of submittedPrompts.slice().reverse(); let i = index; trackBy: trackByPrompt"
       >
-        <div class="prompt-history-header" (click)="p.show = !p.show">
-          <span>"<strong>{{ p.prompt }}</strong>" ({{ p.count }})</span>
+        <div class="prompt-history-header" (click)="toggleSummary(submittedPrompts.length - 1 - i)">
+          "<strong>{{ p.prompt }}</strong>" ({{ p.count }})
           <span class="toggle-arrow" [class.rotated]="p.show">▼</span>
         </div>
-        <div class="summary-content" *ngIf="p.show">
+        <div *ngIf="p.show" class="summary-content">
           <p>
             <strong>Summary:</strong> <em>{{ p.summary }}</em>
           </p>
@@ -64,17 +62,16 @@
   <div class="results-section">
     <div *ngIf="results.length > 0; else placeholder">
       <div class="results-header">
-        <h3>Showing {{ resultCount }} results for:</h3>
+        <h3>Showing {{ resultCount }} candidates for:</h3>
         <p class="last-prompt">"{{ lastPrompt }}"</p>
       </div>
 
-      <div class="summary-card" *ngIf="summary">
+      <div *ngIf="summary" class="summary-card">
         <h4>AI Summary</h4>
         <p>{{ summary }}</p>
       </div>
 
-      <!-- Collapsible section for search details -->
-      <details class="details-dropdown" *ngIf="intent || searchRequest">
+      <details *ngIf="intent || searchRequest" class="details-dropdown">
         <summary>Show Search Details</summary>
         <div *ngIf="intent">
           <h4>Intent</h4>
@@ -89,11 +86,11 @@
       <div class="profile-grid">
         <div
           class="profile-card"
-          *ngFor="let profile of results; let i = index; trackBy: trackByRecordId"
+          *ngFor="let profile of results; let i = index; trackBy: trackByResult"
           [style.animation-delay]="i * 100 + 'ms'"
         >
           <div class="profile-header">
-            <div class="profile-avatar">{{ profile.Name | slice : 0 : 1 }}</div>
+            <div class="profile-avatar">{{ profile.Name | slice:0:1 }}</div>
             <div class="profile-info">
               <h4 class="profile-name">{{ profile.Name }}</h4>
               <p class="profile-role">{{ profile.Role }}</p>
@@ -109,7 +106,7 @@
             <div class="profile-skills">
               <strong>Skills:</strong>
               <div class="skills-tags">
-                <span *ngFor="let skill of profile.Skills.split(', ')" class="skill-tag">
+                <span class="skill-tag" *ngFor="let skill of profile.Skills.split(', ')">
                   {{ skill }}
                 </span>
               </div>
@@ -121,9 +118,9 @@
 
     <ng-template #placeholder>
       <div class="placeholder">
-        <div class="placeholder-icon">📄</div>
-        <h3>Your results will appear here</h3>
-        <p>Enter a prompt to find candidates.</p>
+        <div class="placeholder-icon">🔍</div>
+        <h3>Search Smarter, Not Harder</h3>
+        <p>Type a prompt above and discover the best candidates instantly.</p>
       </div>
     </ng-template>
   </div>
@@ -135,6 +132,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SearchService } from '../api/search-search';
 
+interface SubmittedPrompt {
+  prompt: string;
+  count: number;
+  summary: string;
+  show?: boolean;
+}
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -144,10 +148,10 @@ import { SearchService } from '../api/search-search';
 })
 export class Home {
   prompt: string = '';
-  isSubmitting = false;
+  isSubmitting: boolean = false;
   lastPrompt: string = '';
 
-  submittedPrompts: { prompt: string; count: number; summary: string; show?: boolean }[] = [];
+  submittedPrompts: SubmittedPrompt[] = [];
   results: any[] = [];
   resultCount: number = 0;
   summary: string = '';
@@ -175,12 +179,10 @@ export class Home {
         this.summary = response.summary || '';
         this.resultCount = this.results.length;
 
-        this.submittedPrompts.push({
-          prompt: text,
-          count: this.resultCount,
-          summary: this.summary,
-          show: false,
-        });
+        this.submittedPrompts = [
+          ...this.submittedPrompts,
+          { prompt: text, count: this.resultCount, summary: this.summary, show: false },
+        ];
 
         this.prompt = '';
         this.isSubmitting = false;
@@ -193,19 +195,229 @@ export class Home {
   }
 
   clearPrompt(): void {
-    if (this.isSubmitting) return;
-    this.prompt = '';
+    if (!this.isSubmitting) this.prompt = '';
+  }
+
+  toggleSummary(index: number): void {
+    const realIndex = this.submittedPrompts.length - 1 - index;
+    if (this.submittedPrompts[realIndex]) {
+      this.submittedPrompts[realIndex].show = !this.submittedPrompts[realIndex].show;
+    }
   }
 
   get isSubmitDisabled(): boolean {
-    return !(this.prompt ?? '').trim() || this.isSubmitting;
+    return !(this.prompt?.trim()) || this.isSubmitting;
   }
 
-  trackByPrompt(index: number, item: any) {
+  trackByPrompt(index: number, item: SubmittedPrompt): string {
     return item.prompt;
   }
 
-  trackByRecordId(index: number, item: any) {
-    return item.recordid;
+  trackByResult(index: number, item: any): string {
+    return item.recordid || index.toString();
   }
 }
+
+
+:root {
+  --background-dark: #121212;
+  --background-light: #1e1e1e;
+  --primary-color: #3f51b5;
+  --primary-hover: #303f9f;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --border-color: #333;
+  --card-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: var(--background-dark);
+  color: var(--text-primary);
+}
+
+.home-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Left Column */
+.prompt-section {
+  width: 35%;
+  min-width: 400px;
+  background: var(--background-light);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
+}
+
+.prompt-card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.3rem;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.prompt-input {
+  width: 100%;
+  min-height: 120px;
+  background: #2c2c2c;
+  color: var(--text-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  padding: 1rem;
+  font-size: 1rem;
+  resize: vertical;
+}
+
+.prompt-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(63,81,181,0.3);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.clear-btn, .primary-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.clear-btn:hover {
+  background: #333;
+}
+
+.primary-btn:not(:disabled) {
+  background: var(--primary-color);
+  color: var(--text-primary);
+}
+
+.primary-btn:not(:disabled):hover {
+  background: var(--primary-hover);
+}
+
+.primary-btn:disabled {
+  background: #555;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Results Section */
+.results-section {
+  flex-grow: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.results-header h3 {
+  color: var(--text-secondary);
+}
+
+.last-prompt {
+  font-style: italic;
+  margin: 0.5rem 0 1rem;
+}
+
+.summary-card {
+  background: rgba(63,81,181,0.1);
+  border-left: 4px solid var(--primary-color);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Profile Grid & Cards */
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.profile-card {
+  background: var(--background-light);
+  border: 1px solid #444;
+  border-radius: 12px;
+  padding: 1rem;
+  color: var(--text-primary);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: slideInUp 0.5s forwards;
+}
+
+.profile-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+.profile-header { display: flex; align-items: center; margin-bottom: 0.5rem; }
+.profile-avatar {
+  width: 50px; height:50px; border-radius:50%; background: var(--primary-color);
+  display:flex; justify-content:center; align-items:center; font-weight:600; font-size:1.2rem; margin-right:1rem;
+}
+.profile-name { margin:0; }
+.profile-role { margin:0; color: var(--text-secondary); }
+
+.profile-details span { display:block; font-size:0.9rem; margin-bottom:0.2rem; }
+
+.skills-tags { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem; }
+.skill-tag { background:#333; color:#aaa; padding:0.25rem 0.75rem; border-radius:15px; font-size:0.8rem; }
+
+/* Placeholder */
+.placeholder { display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; margin-top:5rem; color:var(--text-secondary); }
+.placeholder-icon { font-size:4rem; margin-bottom:1rem; }
+
+/* Animations */
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+@keyframes slideInUp { from { opacity:0; transform:translateY(20px);} to { opacity:1; transform:translateY(0); } }
+
+/* Summary Section */
+.summary-content {
+  margin-top:0.5rem; padding:0.5rem 1rem;
+  background: rgba(255,255,255,0.05);
+  border-left:4px solid #00bcd4; border-radius:6px;
+}
+.toggle-arrow { float:right; transition:0.3s ease; }
+.toggle-arrow.rotated { transform: rotate(180deg); }
