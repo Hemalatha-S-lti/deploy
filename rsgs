@@ -1,16 +1,16 @@
 <div class="home-container">
   <!-- Left Column: Prompt Section & History -->
   <div class="prompt-section">
-    <div class="prompt-card">
-      <h2 class="title">AI Candidate Finder</h2>
-      <p class="subtitle">Smart search powered by Azure AI</p>
+    <div class="prompt-card centered-card">
+      <h2 class="title">TalentAI</h2>
+      <p class="subtitle">Discover Top Talent Instantly</p>
 
       <label class="sr-only" for="promptInput">Enter your search prompt</label>
       <textarea
         id="promptInput"
         class="prompt-input"
         [(ngModel)]="prompt"
-        placeholder="e.g., 'Cloud architect with Azure experience'"
+        placeholder="Type a skill, role, or keyword e.g., 'Cloud Architect with Azure skills'"
         (keydown.control.enter)="submitPrompt()"
         (keydown.meta.enter)="submitPrompt()"
       ></textarea>
@@ -33,12 +33,12 @@
           <ng-container *ngIf="isSubmitting; else submitText">
             <span class="spinner"></span>
           </ng-container>
-          <ng-template #submitText>Find Candidates</ng-template>
+          <ng-template #submitText>Search</ng-template>
         </button>
       </div>
     </div>
 
-    <!-- Section for previously submitted prompts -->
+    <!-- Recently submitted prompts -->
     <div *ngIf="submittedPrompts.length > 0" class="submitted-prompts">
       <h3 class="submitted-title">Recent Searches</h3>
       <div
@@ -118,122 +118,31 @@
 
     <ng-template #placeholder>
       <div class="placeholder">
-        <div class="placeholder-icon">🔍</div>
-        <h3>Search Smarter, Not Harder</h3>
-        <p>Type a prompt above and discover the best candidates instantly.</p>
+        <div class="placeholder-icon">✨</div>
+        <h3>Welcome to TalentAI</h3>
+        <p>Type a skill or role above to instantly find top talent.</p>
       </div>
     </ng-template>
   </div>
 </div>
 
 
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { SearchService } from '../api/search-search';
-
-interface SubmittedPrompt {
-  prompt: string;
-  count: number;
-  summary: string;
-  show?: boolean;
-}
-
-@Component({
-  selector: 'app-home',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './home.html',
-  styleUrls: ['./home.css'],
-})
-export class Home {
-  prompt: string = '';
-  isSubmitting: boolean = false;
-  lastPrompt: string = '';
-
-  submittedPrompts: SubmittedPrompt[] = [];
-  results: any[] = [];
-  resultCount: number = 0;
-  summary: string = '';
-  intent: any = null;
-  searchRequest: any = null;
-
-  constructor(private searchService: SearchService) {}
-
-  submitPrompt(): void {
-    const text = this.prompt.trim();
-    if (!text || this.isSubmitting) return;
-
-    this.isSubmitting = true;
-    this.results = [];
-    this.summary = '';
-    this.intent = null;
-    this.searchRequest = null;
-
-    this.searchService.searchProfiles(text).subscribe({
-      next: (response) => {
-        this.lastPrompt = text;
-        this.intent = response.intent;
-        this.searchRequest = response.azure_search_request;
-        this.results = response.results || [];
-        this.summary = response.summary || '';
-        this.resultCount = this.results.length;
-
-        this.submittedPrompts = [
-          ...this.submittedPrompts,
-          { prompt: text, count: this.resultCount, summary: this.summary, show: false },
-        ];
-
-        this.prompt = '';
-        this.isSubmitting = false;
-      },
-      error: (err) => {
-        console.error('API error:', err);
-        this.isSubmitting = false;
-      },
-    });
-  }
-
-  clearPrompt(): void {
-    if (!this.isSubmitting) this.prompt = '';
-  }
-
-  toggleSummary(index: number): void {
-    const realIndex = this.submittedPrompts.length - 1 - index;
-    if (this.submittedPrompts[realIndex]) {
-      this.submittedPrompts[realIndex].show = !this.submittedPrompts[realIndex].show;
-    }
-  }
-
-  get isSubmitDisabled(): boolean {
-    return !(this.prompt?.trim()) || this.isSubmitting;
-  }
-
-  trackByPrompt(index: number, item: SubmittedPrompt): string {
-    return item.prompt;
-  }
-
-  trackByResult(index: number, item: any): string {
-    return item.recordid || index.toString();
-  }
-}
-
-
 :root {
-  --background-dark: #121212;
-  --background-light: #1e1e1e;
-  --primary-color: #3f51b5;
-  --primary-hover: #303f9f;
+  --background-dark: #0e0e0e;
+  --background-light: #1f1f1f;
+  --primary-color: #4caf50;
+  --primary-hover: #43a047;
   --text-primary: #ffffff;
   --text-secondary: #b0b0b0;
   --border-color: #333;
-  --card-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  --card-shadow: 0 15px 40px rgba(0,0,0,0.6);
+  --font-style: 'Poppins', sans-serif;
 }
 
 html, body {
   height: 100%;
   margin: 0;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: var(--font-style);
   background: var(--background-dark);
   color: var(--text-primary);
 }
@@ -242,68 +151,87 @@ html, body {
   display: flex;
   height: 100vh;
   overflow: hidden;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Left Column */
 .prompt-section {
-  width: 35%;
-  min-width: 400px;
-  background: var(--background-light);
+  width: 40%;
+  min-width: 420px;
   padding: 2rem;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--border-color);
+  align-items: center;
+  background: var(--background-light);
+  border-radius: 15px;
+  box-shadow: var(--card-shadow);
 }
 
-.prompt-card {
-  animation: fadeIn 0.5s ease-out;
+.centered-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .title {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 2.3rem;
+  font-weight: 800;
   color: var(--primary-color);
   margin-bottom: 0.3rem;
+  letter-spacing: 1px;
 }
 
 .subtitle {
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: var(--text-secondary);
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  line-height: 1.3rem;
 }
 
 .prompt-input {
   width: 100%;
-  min-height: 120px;
-  background: #2c2c2c;
-  color: var(--text-primary);
-  border-radius: 8px;
+  min-height: 140px;
+  background: #2b2b2b;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 500;
+  font-family: var(--font-style);
+  border-radius: 12px;
   border: 1px solid var(--border-color);
-  padding: 1rem;
-  font-size: 1rem;
+  padding: 1rem 1.2rem;
+  outline: none;
   resize: vertical;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+}
+
+.prompt-input::placeholder {
+  color: #aaa;
+  font-style: italic;
 }
 
 .prompt-input:focus {
-  outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(63,81,181,0.3);
+  box-shadow: 0 0 10px rgba(76,175,80,0.5);
 }
 
+/* Buttons */
 .actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 1rem;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 }
 
 .clear-btn, .primary-btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
+  padding: 0.7rem 1.6rem;
+  border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-size: 1rem;
+  transition: all 0.3s ease;
 }
 
 .clear-btn {
@@ -312,24 +240,18 @@ html, body {
   border: 1px solid var(--border-color);
 }
 
-.clear-btn:hover {
-  background: #333;
-}
+.clear-btn:hover { background: #333; }
 
 .primary-btn:not(:disabled) {
   background: var(--primary-color);
-  color: var(--text-primary);
+  color: #fff;
 }
 
 .primary-btn:not(:disabled):hover {
   background: var(--primary-hover);
 }
 
-.primary-btn:disabled {
-  background: #555;
-  color: #888;
-  cursor: not-allowed;
-}
+.primary-btn:disabled { background: #555; color: #888; cursor: not-allowed; }
 
 .spinner {
   width: 20px;
@@ -342,62 +264,62 @@ html, body {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* Recent Searches */
+.submitted-prompts {
+  margin-top: 2rem;
+  width: 100%;
+}
+
+.prompt-card-small {
+  background: rgba(76,175,80,0.1);
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.summary-content {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(76,175,80,0.15);
+  border-left: 4px solid var(--primary-color);
+  border-radius: 6px;
+}
+
 /* Results Section */
 .results-section {
   flex-grow: 1;
   padding: 2rem;
   overflow-y: auto;
+  margin-left: 2rem;
 }
 
-.results-header h3 {
-  color: var(--text-secondary);
-}
-
-.last-prompt {
-  font-style: italic;
-  margin: 0.5rem 0 1rem;
-}
-
-.summary-card {
-  background: rgba(63,81,181,0.1);
-  border-left: 4px solid var(--primary-color);
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  animation: fadeIn 0.5s ease-out;
-}
-
-/* Profile Grid & Cards */
 .profile-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill,minmax(280px,1fr));
   gap: 1.5rem;
 }
 
 .profile-card {
-  background: var(--background-light);
-  border: 1px solid #444;
+  background: #1f1f1f;
   border-radius: 12px;
   padding: 1rem;
-  color: var(--text-primary);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.6);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   opacity: 0;
   transform: translateY(20px);
   animation: slideInUp 0.5s forwards;
 }
 
 .profile-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 35px rgba(0,0,0,0.7);
 }
 
-.profile-header { display: flex; align-items: center; margin-bottom: 0.5rem; }
-.profile-avatar {
-  width: 50px; height:50px; border-radius:50%; background: var(--primary-color);
-  display:flex; justify-content:center; align-items:center; font-weight:600; font-size:1.2rem; margin-right:1rem;
-}
-.profile-name { margin:0; }
+.profile-header { display:flex; align-items:center; margin-bottom:0.5rem; }
+.profile-avatar { width:50px; height:50px; border-radius:50%; background: var(--primary-color); display:flex; align-items:center; justify-content:center; font-weight:700; margin-right:1rem; font-size:1.2rem; }
+
+.profile-name { margin:0; font-weight:700; }
 .profile-role { margin:0; color: var(--text-secondary); }
 
 .profile-details span { display:block; font-size:0.9rem; margin-bottom:0.2rem; }
@@ -405,7 +327,6 @@ html, body {
 .skills-tags { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem; }
 .skill-tag { background:#333; color:#aaa; padding:0.25rem 0.75rem; border-radius:15px; font-size:0.8rem; }
 
-/* Placeholder */
 .placeholder { display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; margin-top:5rem; color:var(--text-secondary); }
 .placeholder-icon { font-size:4rem; margin-bottom:1rem; }
 
@@ -413,11 +334,5 @@ html, body {
 @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
 @keyframes slideInUp { from { opacity:0; transform:translateY(20px);} to { opacity:1; transform:translateY(0); } }
 
-/* Summary Section */
-.summary-content {
-  margin-top:0.5rem; padding:0.5rem 1rem;
-  background: rgba(255,255,255,0.05);
-  border-left:4px solid #00bcd4; border-radius:6px;
-}
 .toggle-arrow { float:right; transition:0.3s ease; }
 .toggle-arrow.rotated { transform: rotate(180deg); }
