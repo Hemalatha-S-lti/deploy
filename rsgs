@@ -1,334 +1,558 @@
-<div class="home-container">
-  <!-- Prompt Section in Center -->
-  <div class="prompt-section">
-    <div class="prompt-card">
-      <h2 class="title">Semantic Search</h2>
-      <p class="subtitle">Explore Smart Insights</p>
-
-      <label class="sr-only" for="promptInput">Your prompt</label>
-      <textarea
-        id="promptInput"
-        class="prompt-input"
-        [(ngModel)]="prompt"
-        placeholder="Type here... e.g., 'cloud architect with Azure skills'"
-        (keydown.control.enter)="submitPrompt()"
-        (keydown.meta.enter)="submitPrompt()"
-      ></textarea>
-
-      <div class="actions">
-        <button
-          class="clear-btn"
-          type="button"
-          (click)="clearPrompt()"
-          [disabled]="!prompt.length || isSubmitting"
-        >
-          Clear
-        </button>
-        <button
-          class="primary-btn"
-          type="button"
-          (click)="submitPrompt()"
-          [disabled]="isSubmitDisabled"
-        >
-          <span *ngIf="isSubmitting" class="spinner"></span>
-          <span *ngIf="!isSubmitting">Find Insights</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Previously Submitted Prompts -->
-    <div *ngIf="submittedPrompts.length > 0" class="submitted-prompts">
-      <h3 class="submitted-title">Recent Searches</h3>
-      <div *ngFor="let p of submittedPrompts.slice().reverse()" class="prompt-card-small">
-        <div class="prompt-history-header" (click)="p.show = !p.show">
-          "<strong>{{ p.prompt }}</strong>" ({{ p.count }})
-          <span class="toggle-arrow" [class.rotated]="p.show">▼</span>
-        </div>
-        <div *ngIf="p.show" class="summary-content">
-          <p>
-            <strong>Summary:</strong> <em>{{ p.summary }}</em>
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Results Section -->
-  <div class="results-section">
-    <div *ngIf="results.length > 0">
-      <div class="results-header">
-        <h3>Showing {{ resultCount }} results for:</h3>
-        <p class="last-prompt">"{{ lastPrompt }}"</p>
-      </div>
-
-      <div *ngIf="summary" class="summary-card">
-        <h4>AI Summary</h4>
-        <p>{{ summary }}</p>
-      </div>
-
-      <details *ngIf="intent || searchRequest" class="details-dropdown">
-        <summary>Show Search Details</summary>
-        <div *ngIf="intent">
-          <h4>Intent</h4>
-          <pre class="code-block">{{ intent | json }}</pre>
-        </div>
-        <div *ngIf="searchRequest">
-          <h4>Azure Search Request</h4>
-          <pre class="code-block">{{ searchRequest | json }}</pre>
-        </div>
-      </details>
-
-      <div class="profile-grid">
-        <div *ngFor="let profile of results; let i = index" class="profile-card" [style.animation-delay]="i * 100 + 'ms'">
-          <div class="profile-header">
-            <div class="profile-avatar">{{ profile.Name | slice:0:1 }}</div>
-            <div class="profile-info">
-              <h4 class="profile-name">{{ profile.Name }}</h4>
-              <p class="profile-role">{{ profile.Role }}</p>
-            </div>
-          </div>
-          <div class="profile-body">
-            <p class="profile-summary">{{ profile.ProfileSummary }}</p>
-            <div class="profile-details">
-              <span><strong>Location:</strong> {{ profile.Location }}</span>
-              <span><strong>Experience:</strong> {{ profile.ExperienceYears }} years</span>
-              <span><strong>Industry:</strong> {{ profile.Industry }}</span>
-            </div>
-            <div class="profile-skills">
-              <strong>Skills:</strong>
-              <div class="skills-tags">
-                <span *ngFor="let skill of profile.Skills.split(', ')" class="skill-tag">{{ skill }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div *ngIf="results.length === 0" class="placeholder">
-      <div class="placeholder-icon">📄</div>
-      <h3>Your insights will appear here</h3>
-      <p>Type a prompt to explore smart results.</p>
-    </div>
-  </div>
-</div>
-
-
-:root {
-  --background-dark: #121212;
-  --background-light: #1e1e1e;
-  --primary-color: #3f51b5;
-  --primary-hover: #303f9f;
-  --text-primary: #ffffff;
-  --text-secondary: #b0b0b0;
-  --border-color: #333333;
-  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+:host {
+  --primary-color: #00bfff; /* Deep Sky Blue */
+  --background-color: #1a1a1a;
+  --text-color: #e0e0e0;
+  --panel-bg-color: #2a2a2a;
+  --border-color: #444;
 }
 
-html, body {
-  height: 100%;
-  margin: 0;
-  font-family: 'Segoe UI', 'Roboto', sans-serif;
-  background-color: var(--background-dark);
-  color: var(--text-primary);
-}
-
-.home-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
+.jarvis-container {
+  max-width: 800px;
+  margin: 2rem auto;
   padding: 2rem;
-  min-height: 100vh;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Centered Prompt Section */
-.prompt-section {
-  width: 100%;
-  max-width: 600px;
-  background-color: var(--background-light);
-  padding: 2rem;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-  box-shadow: var(--card-shadow);
+header {
+  text-align: center;
   margin-bottom: 2rem;
 }
 
-/* Title & Subtitle */
-.title {
-  font-size: 2.5rem;
-  font-weight: 700;
+header h1 {
   color: var(--primary-color);
   margin: 0;
-  text-align: center;
+  letter-spacing: 4px;
 }
 
-.subtitle {
-  font-size: 1.2rem;
-  color: var(--text-secondary);
-  margin: 0.5rem 0 2rem 0;
-  text-align: center;
-}
-
-/* Prompt Input */
-.prompt-input {
-  width: 100%;
-  min-height: 180px;
-  background-color: #2c2c2c;
-  color: #ffffff;
-  font-size: 1.1rem;
-  font-weight: 500;
-  font-family: 'Segoe UI', 'Roboto', sans-serif;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 1rem;
-  resize: vertical;
-  outline: none;
-}
-
-.prompt-input::placeholder {
-  color: #bbbbbb;
-  font-style: italic;
-}
-
-/* Actions Buttons */
-.actions {
+.mic-container {
+  position: relative;
   display: flex;
   justify-content: center;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.clear-btn,
-.primary-btn {
-  padding: 0.8rem 2rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.clear-btn {
-  background-color: transparent;
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
-}
-
-.clear-btn:hover {
-  background-color: #333;
-}
-
-.primary-btn:not(:disabled) {
-  background-color: var(--primary-color);
-  color: var(--text-primary);
-  display: flex;
   align-items: center;
-  justify-content: center;
+  margin-bottom: 1rem;
 }
 
-.primary-btn:not(:disabled):hover {
-  background-color: var(--primary-hover);
-}
-
-.primary-btn:disabled {
-  background-color: #555;
-  color: #a0a0a0;
-  cursor: not-allowed;
-}
-
-.spinner {
-  width: 20px;
-  height: 20px;
-  border: 3px solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
+.mic-button {
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
+  background: var(--panel-bg-color);
+  border: 3px solid var(--primary-color);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px rgba(0, 191, 255, 0.3);
+  z-index: 2;
+}
+
+.mic-button:hover {
+  box-shadow: 0 0 25px var(--primary-color);
+}
+
+.mic-button.listening {
+  background: var(--primary-color);
+  box-shadow: 0 0 30px var(--primary-color);
+}
+
+.mic-button:disabled,
+.mic-button.initializing {
+  cursor: wait;
+  background-color: #444;
+  border-color: #777;
+  box-shadow: none;
+}
+
+.mic-icon {
+  font-size: 3rem;
+}
+
+/* New Spinner Styles */
+.mic-icon.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--primary-color);
   animation: spin 1s ease-in-out infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
-/* Submitted Prompts & Summary */
-.submitted-prompts { margin-top: 16px; }
-.submitted-title { text-align: center; font-weight: 600; font-size: 1rem; color: var(--primary-color); }
-.prompt-card-small { background: rgba(141,148,179,0.2); padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; }
-.summary-content { margin-top: 0.5rem; padding: 0.75rem 1rem; background-color: rgba(255,255,255,0.05); border-left: 4px solid #00bcd4; border-radius: 6px; }
+.pulse-ring {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border: 3px solid var(--primary-color);
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(1);
+  z-index: 1;
+}
 
-/* Results Section */
-.results-section { width: 100%; max-width: 900px; }
+.pulse-ring.active {
+  animation: pulse 1.5s infinite;
+}
 
-.profile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
 
-.profile-card { background-color: var(--background-light); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3); opacity: 0; transform: translateY(20px); animation: slideInUp 0.5s forwards; }
+.status {
+  text-align: center;
+  font-size: 1.1rem;
+  min-height: 24px;
+}
 
-.profile-header { display: flex; align-items: center; margin-bottom: 1rem; }
-.profile-avatar { width:50px; height:50px; border-radius:50%; background-color:var(--primary-color); color:white; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:600; margin-right:1rem; }
-.profile-name { margin:0; font-size:1.25rem; }
-.profile-role { margin:0; color:var(--text-secondary); }
+.listening-text {
+  color: var(--primary-color);
+}
+.speaking-text {
+  color: #ffdb58;
+} /* Mustard Yellow */
+.initializing-text {
+  color: #aaa;
+} /* New status text color */
 
-.profile-body { margin-top: 0.5rem; }
-.profile-summary { margin-bottom:1rem; color:var(--text-secondary); }
-.profile-details { display:flex; flex-wrap:wrap; gap:1rem; margin-bottom:1rem; font-size:0.9rem; }
-.skills-tags { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem; }
-.skill-tag { background-color:#333; color:var(--text-secondary); padding:0.25rem 0.75rem; border-radius:15px; font-size:0.8rem; }
+.speaking-visualizer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  margin-top: -20px;
+  margin-bottom: 1rem;
+}
 
-.placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; color:var(--text-secondary); }
-.placeholder-icon { font-size:4rem; margin-bottom:1rem; }
+.speaking-visualizer.active {
+  opacity: 1;
+}
 
-@keyframes slideInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+.speaking-visualizer .bar {
+  width: 8px;
+  height: 5px;
+  margin: 0 3px;
+  background-color: var(--primary-color);
+  border-radius: 5px;
+  animation: speak-wave 1.2s infinite ease-in-out;
+}
+
+.speaking-visualizer .bar:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.speaking-visualizer .bar:nth-child(3) {
+  animation-delay: 0.4s;
+}
+.speaking-visualizer .bar:nth-child(4) {
+  animation-delay: 0.6s;
+}
+.speaking-visualizer .bar:nth-child(5) {
+  animation-delay: 0.8s;
+}
+
+@keyframes speak-wave {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(5);
+  }
+}
+
+.transcript-panel {
+  background: var(--panel-bg-color);
+  padding: 1.5rem;
+  border-radius: 10px;
+  min-height: 60px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 1rem;
+}
+
+.transcript .final {
+  color: var(--text-color);
+  font-weight: bold;
+}
+.transcript .partial {
+  color: #aaa;
+}
+.transcript .placeholder {
+  color: #666;
+}
+
+.controls-panel {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.search-button {
+  padding: 12px 25px;
+  background-color: var(--primary-color);
+  border: none;
+  color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
+
+.search-button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+.error-message {
+  color: #ff4d4d;
+  text-align: center;
+}
+
+.results-container,
+.history-container {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.summary-panel {
+  background: rgba(0, 191, 255, 0.1);
+  padding: 1rem;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.summary-header h4 {
+  margin: 0;
+}
+
+.speak-button {
+  padding: 8px 15px;
+  background-color: var(--primary-color);
+  border: none;
+  color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s;
+}
+
+.speak-button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.details-dropdown {
+  background: var(--panel-bg-color);
+  border-radius: 5px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+}
+
+.details-dropdown summary {
+  cursor: pointer;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.code-block {
+  background-color: #111;
+  padding: 1rem;
+  border-radius: 5px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #ccc;
+}
+
+.history-item {
+  background: var(--panel-bg-color);
+  padding: 1rem;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+  border-left: 3px solid var(--primary-color);
+}
 
 
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+<div class="jarvis-container">
+  <header>
+    <h1>AutoMates</h1>
+    <p>Voice Assistant</p>
+  </header>
+
+  <div class="mic-container">
+    <button
+      class="mic-button"
+      [class.listening]="isListening()"
+      [class.initializing]="micInitializing()"
+      (click)="toggleMic()"
+      [disabled]="micInitializing()"
+      aria-label="Toggle Voice Search"
+    >
+      @if (micInitializing()) {
+      <span class="mic-icon loading-spinner"></span>
+      } @else {
+      <span class="mic-icon">🎙️</span>
+      }
+    </button>
+    <div class="pulse-ring" [class.active]="isPulsing()"></div>
+  </div>
+
+  <div class="status">
+    @if (micInitializing()) {
+    <p class="initializing-text">Initializing microphone...</p>
+    } @else if (isListening()) {
+    <p class="listening-text">Listening...</p>
+    } @else if (isSpeaking()) {
+    <p class="speaking-text">Speaking...</p>
+    } @else {
+    <p>Press the button to start.</p>
+    }
+  </div>
+
+  <!-- AI Speaking Visualizer -->
+  <div class="speaking-visualizer" [class.active]="isSpeaking()">
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+  </div>
+
+  <div class="transcript-panel">
+    <p class="transcript">
+      <span class="final">{{ final$() }}</span>
+      @if (partial$()) {
+      <span class="partial">{{ partial$() }}</span>
+      } @if (!final$() && !partial$()) {
+      <span class="placeholder">Your command will appear here...</span>
+      }
+    </p>
+  </div>
+
+  <div class="controls-panel">
+    <button class="search-button" [disabled]="sending() || !final$()" (click)="sendToSearch()">
+      {{ sending() ? 'Searching...' : 'Send to Search' }}
+    </button>
+  </div>
+
+  @if (errorMsg()) {
+  <p class="error-message">{{ errorMsg() }}</p>
+  } @if (lastSummary() || results().length > 0) {
+  <div class="results-container">
+    <h3>Current Result</h3>
+    @if (lastSummary()) {
+    <div class="summary-panel">
+      <div class="summary-header">
+        <h4>Summary</h4>
+        <button class="speak-button" (click)="speakSummary()" [disabled]="isSpeaking()">
+          {{ isSpeaking() ? 'Speaking...' : 'Speak' }}
+        </button>
+      </div>
+      <p>{{ lastSummary() }}</p>
+    </div>
+    }
+
+    <details class="details-dropdown">
+      <summary>Show Records & Search Details</summary>
+      @if (intent()) {
+      <p><strong>Intent:</strong> {{ intent() }}</p>
+      } @if (searchRequest()) {
+      <h4>Azure Search Request</h4>
+      <pre class="code-block">{{ searchRequest() | json }}</pre>
+      } @if (results().length) {
+      <h4>Retrieved Records ({{ results().length }})</h4>
+      <ol>
+        @for (r of results(); track r) {
+        <li>
+          <pre class="code-block">{{ r | json }}</pre>
+        </li>
+        }
+      </ol>
+      }
+    </details>
+  </div>
+  } @if (searchHistory().length > 0) {
+  <div class="history-container">
+    <h3>Session History</h3>
+    @for (item of searchHistory().slice().reverse(); track item.timestamp) {
+    <div class="history-item">
+      <p><strong>Query:</strong> "{{ item.query }}"</p>
+      @if (item.summary) {
+      <p><strong>Summary:</strong> {{ item.summary }}</p>
+      }
+      <details class="details-dropdown">
+        <summary>View Retrieved Records ({{ item.results.length }})</summary>
+        <ol>
+          @for (r of item.results; track r) {
+          <li>
+            <pre class="code-block">{{ r | json }}</pre>
+          </li>
+          }
+        </ol>
+      </details>
+    </div>
+    }
+  </div>
+  }
+</div>
+
+import { environment } from '../../environments/environment';
+import { Component, OnInit, signal, computed } from '@angular/core';
+import { CommonModule, JsonPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SearchService } from '../api/search-search';
+import { firstValueFrom } from 'rxjs';
+import { Speech } from '../service/speech';
+import { Search, SearchResponse } from '../service/search';
+
+type SearchHistoryItem = {
+  query: string;
+  summary: string;
+  results: any[];
+  timestamp: Date;
+};
 
 @Component({
-  selector: 'app-home',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './home.html',
-  styleUrl: './home.css',
+  selector: 'app-voice',
+  imports: [CommonModule, FormsModule, JsonPipe],
+  templateUrl: './voice.html',
+  styleUrl: './voice.css',
 })
-export class Home {
-  prompt: string = '';
-  isSubmitting = false;
-  lastPrompt: string = '';
-  submittedPrompts: { prompt: string; count: number; summary: string; show?: boolean }[] = [];
-  results: any[] = [];
-  resultCount: number = 0;
-  summary: string = '';
-  intent: any = null;
-  searchRequest: any = null;
+export class Voice implements OnInit {
+  topK = environment.search?.default_topk ?? 3;
+  sending = signal(false);
+  errorMsg = signal('');
+  intent = signal<string>('');
+  searchRequest = signal<any>(null);
+  results = signal<any[]>([]);
+  lastSummary = signal('');
+  isSpeaking = signal(false);
+  micInitializing = signal(false); // New state for initialization
+  searchHistory = signal<SearchHistoryItem[]>([]);
 
-  constructor(private searchService: SearchService) {}
+  constructor(private speech: Speech, private search: Search) {}
 
-  submitPrompt(): void {
-    const text = this.prompt.trim();
-    if (!text || this.isSubmitting) return;
+  partial$ = signal('');
+  final$ = signal('');
 
-    this.isSubmitting = true;
-    this.results = [];
-    this.summary = '';
-    this.intent = null;
-    this.searchRequest = null;
+  isPulsing = computed(
+    () => this.isListening() && (this.partial$() !== '' || this.final$() !== '')
+  );
 
-    this.searchService.searchProfiles(text).subscribe({
-      next: (response) => {
-        this.lastPrompt = text;
-        this.intent = response.intent;
-        this.searchRequest = response.azure_search_request;
-        this.results = response.results || [];
-        this.summary = response.summary || '';
-        this.resultCount = this.results.length;
-        this.submittedPrompts.push({ prompt: text, count: this.resultCount, summary: this.summary, show: false });
-        this.prompt = '';
-        this.isSubmitting = false;
-      },
-      error: () => { this.isSubmitting = false; },
-    });
+  ngOnInit() {
+    this.partial$ = this.speech.partialText;
+    this.final$ = this.speech.finalText;
   }
 
-  clearPrompt(): void { if (!this.isSubmitting) this.prompt = ''; }
-  get isSubmitDisabled(): boolean { return !(this.prompt ?? '').trim() || this.isSubmitting; }
+  isListening() {
+    return this.speech.isListening();
+  }
+
+  async toggleMic() {
+    this.errorMsg.set('');
+
+    // If already listening, the only action is to stop.
+    if (this.isListening()) {
+      this.speech.stopListening();
+      return;
+    }
+
+    // Prevent multiple clicks while the mic is starting up.
+    if (this.micInitializing()) {
+      return;
+    }
+
+    this.micInitializing.set(true);
+    try {
+      this.clearAll();
+      await this.speech.startListening();
+    } catch (e: any) {
+      this.errorMsg.set(e?.message ?? 'Microphone error');
+    } finally {
+      this.micInitializing.set(false); // Reset state regardless of success or failure
+    }
+  }
+
+  clearAll() {
+    this.speech.resetTranscript();
+    this.clearSearchResults();
+  }
+
+  clearSearchResults() {
+    this.intent.set('');
+    this.searchRequest.set(null);
+    this.results.set([]);
+    this.lastSummary.set('');
+    this.errorMsg.set('');
+  }
+
+  async sendToSearch() {
+    const prompt = this.final$().trim();
+    if (!prompt) {
+      this.errorMsg.set('Please speak first before searching.');
+      return;
+    }
+
+    if (this.isListening()) {
+      this.speech.stopListening();
+    }
+
+    this.sending.set(true);
+    this.clearSearchResults();
+
+    try {
+      const res: SearchResponse = await firstValueFrom(
+        this.search.searchProfiles(prompt, this.topK)
+      );
+
+      this.intent.set(res.intent || '');
+      this.searchRequest.set(res.azure_search_request ?? null);
+      this.results.set(res.results ?? []);
+      this.lastSummary.set((res.summary ?? '').trim());
+
+      if (this.lastSummary() || this.results().length > 0) {
+        this.searchHistory.update((history) => [
+          ...history,
+          {
+            query: prompt,
+            summary: this.lastSummary(),
+            results: this.results(),
+            timestamp: new Date(),
+          },
+        ]);
+      }
+    } catch (e: any) {
+      this.errorMsg.set(e?.message ?? 'Search API failed');
+    } finally {
+      this.sending.set(false);
+    }
+  }
+
+  async speakSummary() {
+    if (this.lastSummary()) {
+      this.isSpeaking.set(true);
+      await this.speech.speak(this.lastSummary());
+      this.isSpeaking.set(false);
+    }
+  }
 }
