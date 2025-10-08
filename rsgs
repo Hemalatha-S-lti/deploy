@@ -1,442 +1,224 @@
-:host {
-  --primary-color: #00bfff; /* Deep Sky Blue */
-  --background-color: #1a1a1a;
-  --text-color: #e0e0e0;
-  --panel-bg-color: #2a2a2a;
-  --border-color: #444;
-}
-
-.jarvis-container {
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background-color: var(--background-color);
-  color: var(--text-color);
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-header h1 {
-  color: var(--primary-color);
-  margin: 0;
-  letter-spacing: 4px;
-}
-
-.mic-container {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.mic-button {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  background: var(--panel-bg-color);
-  border: 3px solid var(--primary-color);
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 15px rgba(0, 191, 255, 0.3);
-  z-index: 2;
-}
-
-.mic-button:hover {
-  box-shadow: 0 0 25px var(--primary-color);
-}
-
-.mic-button.listening {
-  background: var(--primary-color);
-  box-shadow: 0 0 30px var(--primary-color);
-}
-
-.mic-button:disabled,
-.mic-button.initializing {
-  cursor: wait;
-  background-color: #444;
-  border-color: #777;
-  box-shadow: none;
-}
-
-.mic-icon {
-  font-size: 3rem;
-}
-
-/* New Spinner Styles */
-.mic-icon.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 5px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: var(--primary-color);
-  animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.pulse-ring {
-  position: absolute;
-  width: 100px;
-  height: 100px;
-  border: 3px solid var(--primary-color);
-  border-radius: 50%;
-  opacity: 0;
-  transform: scale(1);
-  z-index: 1;
-}
-
-.pulse-ring.active {
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-
-.status {
-  text-align: center;
-  font-size: 1.1rem;
-  min-height: 24px;
-}
-
-.listening-text {
-  color: var(--primary-color);
-}
-.speaking-text {
-  color: #ffdb58;
-} /* Mustard Yellow */
-.initializing-text {
-  color: #aaa;
-} /* New status text color */
-
-.speaking-visualizer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 50px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  margin-top: -20px;
-  margin-bottom: 1rem;
-}
-
-.speaking-visualizer.active {
-  opacity: 1;
-}
-
-.speaking-visualizer .bar {
-  width: 8px;
-  height: 5px;
-  margin: 0 3px;
-  background-color: var(--primary-color);
-  border-radius: 5px;
-  animation: speak-wave 1.2s infinite ease-in-out;
-}
-
-.speaking-visualizer .bar:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.speaking-visualizer .bar:nth-child(3) {
-  animation-delay: 0.4s;
-}
-.speaking-visualizer .bar:nth-child(4) {
-  animation-delay: 0.6s;
-}
-.speaking-visualizer .bar:nth-child(5) {
-  animation-delay: 0.8s;
-}
-
-@keyframes speak-wave {
-  0%,
-  100% {
-    transform: scaleY(1);
-  }
-  50% {
-    transform: scaleY(5);
-  }
-}
-
-.transcript-panel {
-  background: var(--panel-bg-color);
-  padding: 1.5rem;
-  border-radius: 10px;
-  min-height: 60px;
-  border: 1px solid var(--border-color);
-  margin-bottom: 1rem;
-}
-
-.transcript .final {
-  color: var(--text-color);
-  font-weight: bold;
-}
-.transcript .partial {
-  color: #aaa;
-}
-.transcript .placeholder {
-  color: #666;
-}
-
-.controls-panel {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.search-button {
-  padding: 12px 25px;
-  background-color: var(--primary-color);
-  border: none;
-  color: #fff;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s;
-}
-
-.search-button:disabled {
-  background-color: #555;
-  cursor: not-allowed;
-}
-.error-message {
-  color: #ff4d4d;
-  text-align: center;
-}
-
-.results-container,
-.history-container {
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.summary-panel {
-  background: rgba(0, 191, 255, 0.1);
-  padding: 1rem;
-  border-radius: 5px;
-  margin-bottom: 1rem;
-}
-
-.summary-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.summary-header h4 {
-  margin: 0;
-}
-
-.speak-button {
-  padding: 8px 15px;
-  background-color: var(--primary-color);
-  border: none;
-  color: #fff;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color 0.3s;
-}
-
-.speak-button:disabled {
-  background-color: #555;
-  cursor: not-allowed;
-}
-
-.details-dropdown {
-  background: var(--panel-bg-color);
-  border-radius: 5px;
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border-color);
-}
-
-.details-dropdown summary {
-  cursor: pointer;
-  font-weight: bold;
-  color: var(--primary-color);
-}
-
-.code-block {
-  background-color: #111;
-  padding: 1rem;
-  border-radius: 5px;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  color: #ccc;
-}
-
-.history-item {
-  background: var(--panel-bg-color);
-  padding: 1rem;
-  border-radius: 5px;
-  margin-bottom: 1rem;
-  border-left: 3px solid var(--primary-color);
-}
-
-
-<div class="jarvis-container">
+<div class="voice-container">
   <header>
-    <h1>AutoMates</h1>
-    <p>Voice Assistant</p>
+    <h1>Semantic Voice</h1>
+    <p>Speak to search candidates</p>
   </header>
 
-  <div class="mic-container">
+  <div class="mic-section">
     <button
-      class="mic-button"
+      class="mic-btn"
       [class.listening]="isListening()"
       [class.initializing]="micInitializing()"
       (click)="toggleMic()"
       [disabled]="micInitializing()"
       aria-label="Toggle Voice Search"
     >
-      @if (micInitializing()) {
-      <span class="mic-icon loading-spinner"></span>
-      } @else {
-      <span class="mic-icon">🎙️</span>
-      }
+      <span *ngIf="micInitializing()" class="mic-spinner"></span>
+      <span *ngIf="!micInitializing()" class="mic-icon">🎙️</span>
     </button>
     <div class="pulse-ring" [class.active]="isPulsing()"></div>
   </div>
 
-  <div class="status">
-    @if (micInitializing()) {
-    <p class="initializing-text">Initializing microphone...</p>
-    } @else if (isListening()) {
-    <p class="listening-text">Listening...</p>
-    } @else if (isSpeaking()) {
-    <p class="speaking-text">Speaking...</p>
-    } @else {
-    <p>Press the button to start.</p>
-    }
+  <div class="status-text">
+    <span *ngIf="micInitializing()" class="status-init">Initializing microphone...</span>
+    <span *ngIf="isListening()" class="status-listen">Listening...</span>
+    <span *ngIf="isSpeaking()" class="status-speak">Speaking...</span>
+    <span *ngIf="!micInitializing() && !isListening() && !isSpeaking()">Click mic to start</span>
   </div>
 
-  <!-- AI Speaking Visualizer -->
-  <div class="speaking-visualizer" [class.active]="isSpeaking()">
-    <div class="bar"></div>
-    <div class="bar"></div>
-    <div class="bar"></div>
-    <div class="bar"></div>
-    <div class="bar"></div>
+  <div class="visualizer" [class.active]="isSpeaking()">
+    <div class="bar" *ngFor="let b of [1,2,3,4,5]"></div>
   </div>
 
-  <div class="transcript-panel">
+  <div class="transcript-box">
     <p class="transcript">
       <span class="final">{{ final$() }}</span>
-      @if (partial$()) {
-      <span class="partial">{{ partial$() }}</span>
-      } @if (!final$() && !partial$()) {
-      <span class="placeholder">Your command will appear here...</span>
-      }
+      <span class="partial" *ngIf="partial$()">{{ partial$() }}</span>
+      <span class="placeholder" *ngIf="!final$() && !partial$()">Your voice input will appear here...</span>
     </p>
   </div>
 
-  <div class="controls-panel">
-    <button class="search-button" [disabled]="sending() || !final$()" (click)="sendToSearch()">
+  <div class="controls">
+    <button class="search-btn" [disabled]="sending() || !final$()" (click)="sendToSearch()">
       {{ sending() ? 'Searching...' : 'Send to Search' }}
     </button>
   </div>
 
-  @if (errorMsg()) {
-  <p class="error-message">{{ errorMsg() }}</p>
-  } @if (lastSummary() || results().length > 0) {
-  <div class="results-container">
+  <p class="error-msg" *ngIf="errorMsg()">{{ errorMsg() }}</p>
+
+  <div class="results-section" *ngIf="lastSummary() || results().length > 0">
     <h3>Current Result</h3>
-    @if (lastSummary()) {
-    <div class="summary-panel">
+
+    <div class="summary-card" *ngIf="lastSummary()">
       <div class="summary-header">
         <h4>Summary</h4>
-        <button class="speak-button" (click)="speakSummary()" [disabled]="isSpeaking()">
+        <button class="speak-btn" (click)="speakSummary()" [disabled]="isSpeaking()">
           {{ isSpeaking() ? 'Speaking...' : 'Speak' }}
         </button>
       </div>
       <p>{{ lastSummary() }}</p>
     </div>
-    }
 
-    <details class="details-dropdown">
-      <summary>Show Records & Search Details</summary>
-      @if (intent()) {
-      <p><strong>Intent:</strong> {{ intent() }}</p>
-      } @if (searchRequest()) {
-      <h4>Azure Search Request</h4>
-      <pre class="code-block">{{ searchRequest() | json }}</pre>
-      } @if (results().length) {
-      <h4>Retrieved Records ({{ results().length }})</h4>
-      <ol>
-        @for (r of results(); track r) {
-        <li>
-          <pre class="code-block">{{ r | json }}</pre>
-        </li>
-        }
-      </ol>
-      }
-    </details>
-  </div>
-  } @if (searchHistory().length > 0) {
-  <div class="history-container">
-    <h3>Session History</h3>
-    @for (item of searchHistory().slice().reverse(); track item.timestamp) {
-    <div class="history-item">
-      <p><strong>Query:</strong> "{{ item.query }}"</p>
-      @if (item.summary) {
-      <p><strong>Summary:</strong> {{ item.summary }}</p>
-      }
-      <details class="details-dropdown">
-        <summary>View Retrieved Records ({{ item.results.length }})</summary>
+    <details class="details-panel">
+      <summary>View Records & Search Details</summary>
+      <p *ngIf="intent()"><strong>Intent:</strong> {{ intent() }}</p>
+      <pre class="code-block" *ngIf="searchRequest()">{{ searchRequest() | json }}</pre>
+      <div *ngIf="results().length">
+        <h4>Retrieved Records ({{ results().length }})</h4>
         <ol>
-          @for (r of item.results; track r) {
-          <li>
+          <li *ngFor="let r of results()">
             <pre class="code-block">{{ r | json }}</pre>
           </li>
-          }
+        </ol>
+      </div>
+    </details>
+  </div>
+
+  <div class="history-section" *ngIf="searchHistory().length > 0">
+    <h3>Session History</h3>
+    <div class="history-item" *ngFor="let item of searchHistory().slice().reverse()">
+      <p><strong>Query:</strong> "{{ item.query }}"</p>
+      <p *ngIf="item.summary"><strong>Summary:</strong> {{ item.summary }}</p>
+      <details class="details-panel">
+        <summary>View Records ({{ item.results.length }})</summary>
+        <ol>
+          <li *ngFor="let r of item.results">
+            <pre class="code-block">{{ r | json }}</pre>
+          </li>
         </ol>
       </details>
     </div>
-    }
   </div>
-  }
 </div>
 
-import { environment } from '../../environments/environment';
+
+:host {
+  --primary: #00bfff;
+  --bg: #1a1a1a;
+  --text: #e0e0e0;
+  --panel: #2a2a2a;
+  --border: #444;
+}
+
+.voice-container {
+  max-width: 900px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 15px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+header h1 { color: var(--primary); font-size: 2.5rem; letter-spacing: 3px; }
+header p { color: #aaa; margin: 0.5rem 0 0 0; }
+
+.mic-section { display: flex; justify-content: center; align-items: center; margin-bottom: 1rem; position: relative; }
+
+.mic-btn {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 4px solid var(--primary);
+  display: flex; justify-content: center; align-items: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 0 15px rgba(0,191,255,0.3);
+}
+.mic-btn:hover { box-shadow: 0 0 25px var(--primary); }
+.mic-btn.listening { background: var(--primary); box-shadow: 0 0 30px var(--primary); }
+.mic-btn:disabled { background: #555; border-color: #777; cursor: wait; }
+
+.mic-icon { font-size: 3rem; }
+.mic-spinner {
+  width: 40px; height: 40px;
+  border: 5px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.pulse-ring {
+  position: absolute; width: 110px; height: 110px;
+  border: 4px solid var(--primary); border-radius: 50%;
+  opacity: 0; transform: scale(1);
+  z-index: 1;
+}
+.pulse-ring.active { animation: pulse 1.5s infinite; }
+@keyframes pulse { 0% { transform: scale(1); opacity: 0.8 } 100% { transform: scale(2); opacity: 0; } }
+
+.status-text { text-align: center; font-size: 1.2rem; margin-bottom: 0.5rem; }
+.status-listen { color: var(--primary); }
+.status-speak { color: #ffdb58; }
+.status-init { color: #aaa; }
+
+.visualizer { display: flex; justify-content: center; align-items: center; height: 50px; opacity: 0; transition: opacity 0.3s; margin-bottom: 1rem; }
+.visualizer.active { opacity: 1; }
+.visualizer .bar { width: 8px; height: 5px; margin: 0 3px; background: var(--primary); border-radius: 5px; animation: wave 1.2s infinite ease-in-out; }
+.visualizer .bar:nth-child(2) { animation-delay: 0.2s; }
+.visualizer .bar:nth-child(3) { animation-delay: 0.4s; }
+.visualizer .bar:nth-child(4) { animation-delay: 0.6s; }
+.visualizer .bar:nth-child(5) { animation-delay: 0.8s; }
+@keyframes wave { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(5); } }
+
+.transcript-box {
+  background: var(--panel);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  min-height: 70px;
+}
+
+.controls { text-align: center; margin-bottom: 1.5rem; }
+.search-btn {
+  padding: 12px 28px; border-radius: 8px; background: var(--primary); color: #fff;
+  border: none; cursor: pointer; font-size: 1rem; transition: background 0.3s;
+}
+.search-btn:disabled { background: #555; cursor: not-allowed; }
+
+.results-section, .history-section { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+.summary-card {
+  background: rgba(0,191,255,0.1); padding: 1rem; border-radius: 10px; margin-bottom: 1rem;
+}
+.summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.speak-btn { padding: 8px 16px; border-radius: 5px; background: var(--primary); border: none; color: #fff; cursor: pointer; }
+.speak-btn:disabled { background: #555; cursor: not-allowed; }
+
+.details-panel { background: var(--panel); border-radius: 8px; padding: 0.5rem 1rem; border: 1px solid var(--border); margin-bottom: 1rem; }
+.details-panel summary { cursor: pointer; font-weight: bold; color: var(--primary); }
+
+.code-block { background: #111; padding: 0.8rem; border-radius: 5px; color: #ccc; white-space: pre-wrap; word-wrap: break-word; }
+
+.history-item { background: var(--panel); padding: 1rem; border-radius: 8px; border-left: 3px solid var(--primary); margin-bottom: 1rem; }
+.error-msg { color: #ff4d4d; text-align: center; }
+
+
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule, JsonPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { Speech } from '../service/speech';
 import { Search, SearchResponse } from '../service/search';
 
-type SearchHistoryItem = {
-  query: string;
-  summary: string;
-  results: any[];
-  timestamp: Date;
-};
+type SearchHistoryItem = { query: string; summary: string; results: any[]; timestamp: Date };
 
 @Component({
   selector: 'app-voice',
   imports: [CommonModule, FormsModule, JsonPipe],
-  templateUrl: './voice.html',
-  styleUrl: './voice.css',
+  templateUrl: './voice.component.html',
+  styleUrls: ['./voice.component.css']
 })
 export class Voice implements OnInit {
   topK = environment.search?.default_topk ?? 3;
@@ -447,112 +229,59 @@ export class Voice implements OnInit {
   results = signal<any[]>([]);
   lastSummary = signal('');
   isSpeaking = signal(false);
-  micInitializing = signal(false); // New state for initialization
+  micInitializing = signal(false);
   searchHistory = signal<SearchHistoryItem[]>([]);
-
-  constructor(private speech: Speech, private search: Search) {}
 
   partial$ = signal('');
   final$ = signal('');
 
-  isPulsing = computed(
-    () => this.isListening() && (this.partial$() !== '' || this.final$() !== '')
-  );
+  isPulsing = computed(() => this.isListening() && (this.partial$() !== '' || this.final$() !== ''));
+
+  constructor(private speech: Speech, private search: Search) {}
 
   ngOnInit() {
     this.partial$ = this.speech.partialText;
     this.final$ = this.speech.finalText;
   }
 
-  isListening() {
-    return this.speech.isListening();
-  }
+  isListening() { return this.speech.isListening(); }
 
   async toggleMic() {
     this.errorMsg.set('');
-
-    // If already listening, the only action is to stop.
-    if (this.isListening()) {
-      this.speech.stopListening();
-      return;
-    }
-
-    // Prevent multiple clicks while the mic is starting up.
-    if (this.micInitializing()) {
-      return;
-    }
-
+    if (this.isListening()) { this.speech.stopListening(); return; }
+    if (this.micInitializing()) return;
     this.micInitializing.set(true);
-    try {
-      this.clearAll();
-      await this.speech.startListening();
-    } catch (e: any) {
-      this.errorMsg.set(e?.message ?? 'Microphone error');
-    } finally {
-      this.micInitializing.set(false); // Reset state regardless of success or failure
-    }
+    try { this.clearAll(); await this.speech.startListening(); }
+    catch (e: any) { this.errorMsg.set(e?.message ?? 'Microphone error'); }
+    finally { this.micInitializing.set(false); }
   }
 
-  clearAll() {
-    this.speech.resetTranscript();
-    this.clearSearchResults();
-  }
-
+  clearAll() { this.speech.resetTranscript(); this.clearSearchResults(); }
   clearSearchResults() {
-    this.intent.set('');
-    this.searchRequest.set(null);
-    this.results.set([]);
-    this.lastSummary.set('');
-    this.errorMsg.set('');
+    this.intent.set(''); this.searchRequest.set(null);
+    this.results.set([]); this.lastSummary.set(''); this.errorMsg.set('');
   }
 
   async sendToSearch() {
     const prompt = this.final$().trim();
-    if (!prompt) {
-      this.errorMsg.set('Please speak first before searching.');
-      return;
-    }
+    if (!prompt) { this.errorMsg.set('Please speak first before searching.'); return; }
+    if (this.isListening()) this.speech.stopListening();
 
-    if (this.isListening()) {
-      this.speech.stopListening();
-    }
-
-    this.sending.set(true);
-    this.clearSearchResults();
-
+    this.sending.set(true); this.clearSearchResults();
     try {
-      const res: SearchResponse = await firstValueFrom(
-        this.search.searchProfiles(prompt, this.topK)
-      );
-
+      const res: SearchResponse = await firstValueFrom(this.search.searchProfiles(prompt, this.topK));
       this.intent.set(res.intent || '');
       this.searchRequest.set(res.azure_search_request ?? null);
       this.results.set(res.results ?? []);
       this.lastSummary.set((res.summary ?? '').trim());
-
       if (this.lastSummary() || this.results().length > 0) {
-        this.searchHistory.update((history) => [
-          ...history,
-          {
-            query: prompt,
-            summary: this.lastSummary(),
-            results: this.results(),
-            timestamp: new Date(),
-          },
-        ]);
+        this.searchHistory.update(history => [...history, { query: prompt, summary: this.lastSummary(), results: this.results(), timestamp: new Date() }]);
       }
-    } catch (e: any) {
-      this.errorMsg.set(e?.message ?? 'Search API failed');
-    } finally {
-      this.sending.set(false);
-    }
+    } catch (e: any) { this.errorMsg.set(e?.message ?? 'Search API failed'); }
+    finally { this.sending.set(false); }
   }
 
   async speakSummary() {
-    if (this.lastSummary()) {
-      this.isSpeaking.set(true);
-      await this.speech.speak(this.lastSummary());
-      this.isSpeaking.set(false);
-    }
+    if (this.lastSummary()) { this.isSpeaking.set(true); await this.speech.speak(this.lastSummary()); this.isSpeaking.set(false); }
   }
 }
