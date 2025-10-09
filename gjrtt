@@ -1,0 +1,39 @@
+<!-- app.component.html -->
+<header class="app-header">
+  <img src="assets/logo.png" alt="App Logo" class="app-logo">
+  <h1 class="app-title">Smart Semantic & Voice Search</h1>
+</header>
+
+<main class="app-content">
+  <router-outlet></router-outlet>
+</main>
+
+
+/* app.component.css */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  background-color: #f8f9fb;
+  padding: 15px 30px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.app-logo {
+  height: 55px;
+  margin-right: 15px;
+  border-radius: 10px;
+}
+
+.app-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2c3e50;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.app-content {
+  padding: 25px;
+  background-color: #ffffff;
+  min-height: 100vh;
+}
